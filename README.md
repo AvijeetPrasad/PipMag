@@ -2,15 +2,17 @@
 
 Development of pipeline for magnetic field reconstruction based on spectro-polarimetric observations of the solar atmosphere.
 
-   [DEV] : code development (exc. additions and deletions)
-   [ADD] : adding new feature
-   [DEL] : removing files, routines
-   [FIX] : fixes that occur during development, but which have essentially no impact on previous work
-   [BUG] : bug with significant impact on previous work -- `grep`-ing should give restricted list
-   [OPT] : optimisation
-   [DBG] : debugging
-   [ORG] : organisational, no changes to functionality
-   [SYN] : typos and misspellings (including simple syntax error fixes)
-   [DOC] : documentation only
-   [REP] : repository related changes (e.g., changes in the ignore list, remove files)
-   [UTL] : changes in utils (Python & IDL scripts)
+Use following tags for commit messages:
+
+       [DEV] : Code development (including additions and deletions)
+       [ADD] : Adding new feature
+       [DEL] : Removing files, routines
+       [FIX] : Fixes that occur during development, but which have essentially no impact on previous work
+       [BUG] : Bug with significant impact on previous work -- `grep`-ing should give restricted list
+       [OPT] : Optimisation
+       [DBG] : Debugging
+       [ORG] : Organisational, no changes to functionality
+       [SYN] : Typos and misspellings (including simple syntax error fixes)
+       [DOC] : Documentation only
+       [REP] : Repository related changes (e.g., changes in the ignore list, remove files)
+       [UTL] : Changes in utils
