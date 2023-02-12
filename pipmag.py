@@ -2,7 +2,8 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import pickle
-
+from datetime import datetime
+import pandas as pd
 
 def get_obs_years(la_palma_url='http://tsih3.uio.no/lapalma/',verbose=False):
     # recursively get all the subdirectories in the parent url directory
@@ -180,6 +181,81 @@ def get_date_time_from_link_list(links_list, \
             date_time_not_found_list.append(link)
     return date_time_list, date_time_not_found_list
 
+def check_date_format(date_string, date_format_list):
+# check if the format of the  string '2013-06-30_09:15:50' matches the any of the formats in the date_format_list: if it does, return the format if it does not, return None
+    for date_format in date_format_list:
+        try:
+            datetime.strptime(date_string, date_format)
+            pass
+        except ValueError:
+            print(date_string)
+            pass
+    return None
+
+def get_invalid_dates(date_time_list, date_format_list=['%Y-%m-%d_%H:%M:%S','%d%b%Y_%H:%M:%S','%Y.%m.%d_%H:%M:%S','%Y-%m-%d %H:%M:%S.%f','%Y%m%d_%H%M%S','%Y%m%d_%H:%M:%S']):
+# define a function to take a list of date and times compare it against a list of date and time formats and return the invalid dates
+    invalid_dates = []
+    for date in date_time_list:
+        for date_format in date_format_list:
+            try:
+                pd.to_datetime(date, format=date_format)
+                break
+            except ValueError:
+                if date_format == date_format_list[-1]:
+                    invalid_dates.append(date)
+    if len(invalid_dates) == 0:
+        print(f'All dates in date_time_list are valid')
+    else:
+        print(f"Invalid dates: {invalid_dates}")
+    return None
+
+def convert_to_datetime(date_time_list,date_format_list=['%Y-%m-%d_%H:%M:%S','%d%b%Y_%H:%M:%S','%Y.%m.%d_%H:%M:%S','%Y-%m-%d %H:%M:%S.%f','%Y%m%d_%H%M%S','%Y%m%d_%H:%M:%S']):
+# define a function that takes a list of datetime strings, uses the date_format_list to convert them to datetime objects and returns a list of datetime objects
+    date_time_obj_list = []
+    for date_time in date_time_list:
+        for date_format in date_format_list:
+            try:
+                date_time_obj = datetime.strptime(date_time, date_format)
+                date_time_obj_list.append(date_time_obj)
+            except ValueError:
+                pass
+    return date_time_obj_list
+
+def search_string_in_list(string_list, pattern):
+# define a function that searches for a string pattern in a list of strings if the pattern is found, return the string, if the pattern is not found, return None
+#test_string = search_string_in_list(all_media_links_with_date_time, '0160904')
+#print(test_string)
+    matched_string = []
+    for string in string_list:
+        if re.search(pattern, string):
+            matched_string.append(string)
+    if len(matched_string) == 0:
+        return None
+    else:
+        return matched_string
+
+def get_instrument_info(link_list, instrument_keywords):
+# define a function that takes a list of links and a dictionary of instrument keywords and returns a list of instruments
+    result = set()
+    for string in link_list:
+        for instrument, keywords in instrument_keywords.items():
+            for keyword in keywords:
+                if keyword in string:
+                    result.add(instrument)
+                    break
+    # if no instrument is found, return None
+    if len(result) == 0:
+        return None
+    return list(result)
+
+def get_links_with_string(link_list, string_list):
+#define function that takes a list of links, searches for string patterns and returns a list of the links that matrch the patterns
+    result = []
+    for link in link_list:
+        for string in string_list:
+            if string in link:
+                result.append(link)
+    return result
 
 def print_obs_dates(year, obs_dates):
     # define a function to print all the observing dates for a given year in the obs_dates list
