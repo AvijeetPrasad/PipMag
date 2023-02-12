@@ -343,6 +343,7 @@ class MovieSelector:
         display(display_button)
         display(self.output)
 
+
 class VideoSelector:
     def __init__(self, df):
         self.df = df
@@ -399,12 +400,16 @@ class VideoSelector:
         # Function to update the selected link when the links dropdown value changes
         def links_value_changed(change):
             self.selected_link = change.new
+            self.matches = self.df[self.df['video_links'].apply(lambda x: self.selected_link in x)]
+            self.selected_index = self.matches.index[0]
 
         # Function to display the selected link when the display button is pressed
         def display_selected_link(b):
             with self.output:
                 clear_output()
                 display(Video(self.selected_link, html_attributes='controls autoplay loop'))
+                #print("Selected link index:", self.selected_index)
+                display(widgets.HTML(f"<h3><b>Index:</b> {self.selected_index}</h3>"))
 
         # Register the functions to be called when the year, month, and day dropdown values change
         self.year_dropdown.observe(update_months, names='value')
@@ -421,6 +426,8 @@ class VideoSelector:
         self.display_button = widgets.Button(description='Show')
         self.display_button.on_click(display_selected_link)
 
+        # Register the function to be called when the links dropdown value changes
+        self.links_dropdown.observe(links_value_changed, names='value')
         #Display the dropdown widgets, the button, and the output widget
         display(self.year_dropdown)
         display(self.month_dropdown)
@@ -429,3 +436,48 @@ class VideoSelector:
         display(self.links_dropdown)
         display(self.display_button)
         display(self.output)
+
+class DataUpdater:
+    def __init__(self, df, column_names):
+        self.df = df
+        self.column_names = column_names
+        self.index_text = widgets.Text(description='Index:')
+        self.value_texts = {}
+        for column_name in self.column_names:
+            self.value_texts[column_name] = widgets.Text(description=f'{column_name}:')
+        self.update_button = widgets.Button(description='Update')
+        self.output = widgets.Output()
+
+        self.update_button.on_click(self.update_values)
+        self.index_text.observe(self.display_existing_values, names='value')
+
+    def update_values(self, b):
+        index = int(self.index_text.value)
+        for column_name in self.column_names:
+            value = self.value_texts[column_name].value
+            if isinstance(self.df.at[index, column_name], list):
+                self.df.at[index, column_name] = value.split(',')
+            else:
+                self.df.at[index, column_name] = value
+        with self.output:
+            clear_output()
+            display(widgets.HTML(f"<b>{', '.join(self.column_names)} updated for index {index}</b>"))
+
+    def display_existing_values(self, change):
+        if self.index_text.value:
+            index = int(self.index_text.value)
+            for column_name in self.column_names:
+                existing_value = self.df.at[index, column_name]
+                if isinstance(existing_value, list):
+                    self.value_texts[column_name].value = ', '.join(existing_value)
+                else:
+                    self.value_texts[column_name].value = existing_value if pd.notna(existing_value) else ""
+
+    def display(self):
+        display(self.index_text)
+        for column_name in self.column_names:
+            display(self.value_texts[column_name])
+        display(self.update_button)
+        display(self.output)
+
+
