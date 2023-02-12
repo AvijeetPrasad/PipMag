@@ -393,7 +393,7 @@ class VideoSelector:
         # Function to update the links dropdown based on the selected time
         def update_links(change):
             time = change.new
-            links = list(self.df[self.df['time'] == time]['links'].values[0])
+            links = list(self.df[self.df['time'] == time]['video_links'].values[0])
             self.links_dropdown.options = links
 
         # Function to update the selected link when the links dropdown value changes
@@ -405,7 +405,7 @@ class VideoSelector:
             with self.output:
                 clear_output()
                 display(Video(self.selected_link, html_attributes='controls autoplay loop'))
-                
+
         # Register the functions to be called when the year, month, and day dropdown values change
         self.year_dropdown.observe(update_months, names='value')
         self.month_dropdown.observe(update_days, names='value')
