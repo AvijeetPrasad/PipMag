@@ -4,6 +4,8 @@ import re
 import pickle
 from datetime import datetime
 import pandas as pd
+from IPython.display import display, clear_output, Video
+import ipywidgets as widgets
 
 def get_obs_years(la_palma_url='http://tsih3.uio.no/lapalma/',verbose=False):
     # recursively get all the subdirectories in the parent url directory
@@ -289,3 +291,141 @@ def find_obs_dates(partial_string, obs_dates):
     if len(obs_dates_partial) == 0:
         print('No observation dates found')
     return None
+
+class MovieSelector:
+    '''Class to create a widget to select a movie from a list of movies'''
+    def __init__(self, df):
+        self.df = df
+        
+    def get_links(self, date_time):
+        return self.df[self.df['date_time'] == date_time]['video_links'].values[0]
+        
+    def create_widget(self):
+        # Create a dropdown widget for the date_time column
+        self.date_time_dropdown = widgets.Dropdown(options=self.df['date_time'], description='Date Time:')
+
+        # Create a dropdown widget for the movie links column
+        self.links_dropdown = widgets.Dropdown(options=[], description='Movie Links:')
+
+        # Create a variable to store the selected link
+        self.selected_link = ''
+
+        # Create an output widget to display the selected link
+        self.output = widgets.Output()
+
+        # Function to update the links dropdown based on the selected date_time
+        def update_links(change):
+            date_time = change.new
+            links = self.get_links(date_time)
+            self.links_dropdown.options = links
+
+        # Function to update the selected link when the links dropdown value changes
+        def links_value_changed(change):
+            self.selected_link = change.new
+
+        # Register the function to be called when the date_time dropdown value changes
+        self.date_time_dropdown.observe(update_links, names='value')
+
+        # Register the function to be called when the links dropdown value changes
+        self.links_dropdown.observe(links_value_changed, names='value')
+
+        # Display the dropdown widgets and the output widget
+        display(self.date_time_dropdown)
+        display(self.links_dropdown)
+
+        def display_selected_link_button(b):
+            with self.output:
+                clear_output()
+                display(Video(self.selected_link))
+
+        display_button = widgets.Button(description='Show')
+        display_button.on_click(display_selected_link_button)
+        display(display_button)
+        display(self.output)
+
+class VideoSelector:
+    def __init__(self, df):
+        self.df = df
+
+    def create_widget(self):
+        # Create a dropdown widget for the year column
+        self.year_dropdown = widgets.Dropdown(options=self.df['year'].unique(), description='Year:')
+
+        # Create a dropdown widget for the month column
+        self.month_dropdown = widgets.Dropdown(options=[], description='Month:')
+
+        # Create a dropdown widget for the day column
+        self.day_dropdown = widgets.Dropdown(options=[], description='Day:')
+
+        # Create a dropdown widget for the time column
+        self.time_dropdown = widgets.Dropdown(options=[], description='Time:')
+
+        # Create a dropdown widget for the links column
+        self.links_dropdown = widgets.Dropdown(options=[], description='Links:')
+
+        # Create a variable to store the selected link
+        self.selected_link = ''
+
+        # Create an output widget to display the selected link
+        self.output = widgets.Output()
+
+        # Function to update the month dropdown based on the selected year
+        def update_months(change):
+            year = change.new
+            months = self.df[self.df['year'] == year]['month'].unique()
+            self.month_dropdown.options = months
+
+        # Function to update the day dropdown based on the selected month and year
+        def update_days(change):
+            year = self.year_dropdown.value
+            month = change.new
+            days = self.df[(self.df['year'] == year) & (self.df['month'] == month)]['day'].unique()
+            self.day_dropdown.options = days
+
+        # Function to update the time dropdown based on the selected day, month, and year
+        def update_time(change):
+            year = self.year_dropdown.value
+            month = self.month_dropdown.value
+            day = change.new
+            time = self.df[(self.df['year'] == year) & (self.df['month'] == month) & (self.df['day'] == day)]['time'].unique()
+            self.time_dropdown.options = time
+
+        # Function to update the links dropdown based on the selected time
+        def update_links(change):
+            time = change.new
+            links = list(self.df[self.df['time'] == time]['links'].values[0])
+            self.links_dropdown.options = links
+
+        # Function to update the selected link when the links dropdown value changes
+        def links_value_changed(change):
+            self.selected_link = change.new
+
+        # Function to display the selected link when the display button is pressed
+        def display_selected_link(b):
+            with self.output:
+                clear_output()
+                display(Video(self.selected_link, html_attributes='controls autoplay loop'))
+                
+        # Register the functions to be called when the year, month, and day dropdown values change
+        self.year_dropdown.observe(update_months, names='value')
+        self.month_dropdown.observe(update_days, names='value')
+        self.day_dropdown.observe(update_time, names='value')
+
+        # Register the function to be called when the time dropdown value changes
+        self.time_dropdown.observe(update_links, names='value')
+
+        # Register the function to be called when the links dropdown value changes
+        self.links_dropdown.observe(links_value_changed, names='value')
+
+        #Create a button widget to display the selected link
+        self.display_button = widgets.Button(description='Show')
+        self.display_button.on_click(display_selected_link)
+
+        #Display the dropdown widgets, the button, and the output widget
+        display(self.year_dropdown)
+        display(self.month_dropdown)
+        display(self.day_dropdown)
+        display(self.time_dropdown)
+        display(self.links_dropdown)
+        display(self.display_button)
+        display(self.output)
