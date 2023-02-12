@@ -1,9 +1,10 @@
 import requests
 from bs4 import BeautifulSoup
 import re
+import pickle
 
 
-def get_obs_years(la_palma_url='http://tsih3.uio.no/lapalma/'):
+def get_obs_years(la_palma_url='http://tsih3.uio.no/lapalma/',verbose=False):
     # recursively get all the subdirectories in the parent url directory
     r = requests.get(la_palma_url)
     soup = BeautifulSoup(r.text, 'html.parser')
@@ -12,16 +13,17 @@ def get_obs_years(la_palma_url='http://tsih3.uio.no/lapalma/'):
     # choose the subdirs that are of the form 20?? and ignore the rest
     obs_years = [s for s in obs_years if s.startswith('20')]
     # print the observation years withouth the trailing slash
-    print('The La Palma Observatory has data at UiO for the following years:')
     # for year in obs_years:
     # 	print(year[:-1])
     # print enumerated list of the observation years
-    for i, year in enumerate(obs_years):
-        print(f'{i+1:02d}. {year[:-1]}')
+    if verbose:
+        print('The La Palma Observatory has data at UiO for the following years:')
+        for i, year in enumerate(obs_years):
+            print(f'{i+1:02d}. {year[:-1]}')
     return obs_years
 
 
-def get_obs_dates(obs_years, lapalma_url='http://tsih3.uio.no/lapalma/'):
+def get_obs_dates(obs_years, lapalma_url='http://tsih3.uio.no/lapalma/',verbose=False):
     # recursively get all the subdirectories in the obs_years list
     obs_dates = []
     for subdir in obs_years:
@@ -33,8 +35,15 @@ def get_obs_dates(obs_years, lapalma_url='http://tsih3.uio.no/lapalma/'):
     obs_dates = [s for s in obs_dates if s.startswith(
         '20') and s.count('/') == 2]
     # print the first, last and total number of directories
-    print(
-        f'first entry: {obs_dates[0][:-1]}\nlast entry : {obs_dates[-1][:-1]}\ntotal observing dates: {len(obs_dates)}')
+    first_entry = obs_dates[0][:-1]
+    last_entry = obs_dates[-1][:-1]
+    total_observing_dates = len(obs_dates)
+    #split the first and last entry to remove the year in the front
+    first_entry = first_entry.split('/', 1)[1]
+    last_entry = last_entry.split('/', 1)[1]
+    if verbose:
+        print(
+            f'first entry: {first_entry}\nlast entry : {last_entry}\ntotal observing dates: {len(obs_dates)}')
     return obs_dates
 
 
@@ -116,6 +125,18 @@ def get_all_links(links):
     all_links_sorted = sorted(all_links)
     print(f'total number of links: {len(all_links_sorted)}')
     return all_links_sorted
+
+def save_pickle(data, filename):
+    # define a function that takes data and filename as input and saves the data as a pickle file
+    with open(filename, 'wb') as f:
+        pickle.dump(data, f)
+
+def load_pickle(filename):
+    # define a function that takes filename as input and loads the data from the pickle file
+    with open(filename, 'rb') as f:
+        data = pickle.load(f)
+    print(f'loaded {filename} successfully')
+    return data
 
 def get_date_time_from_link(link,\
     pattern=r'(\d{4}-\d{2}-\d{2})_(\d{2}:\d{2}:\d{2})'):
