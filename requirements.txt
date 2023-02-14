@@ -1,3 +1,7 @@
+# Obtained by running the commands below
+# pip install pipreqs
+# pipreqs . --force
+
 beautifulsoup4==4.11.2
 ipython==8.10.0
 ipywidgets==7.7.3
