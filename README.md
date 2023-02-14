@@ -19,6 +19,6 @@ Use following tags for commit messages:
 
 ## Setting up conda environment
 
-    conda create --name pipmag python=3.9
-    conda activate pipmag
-    conda install --file requirements.txt
+    mamba create --name pipmag 
+    mamba activate pipmag
+    mamba install --file requirements.txt
