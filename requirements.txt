@@ -1,11 +1,5 @@
-beautifulsoup4
-IPython
-jupyter
-matplotlib
-numpy
-os
+bs4
+ipykernel
+ipywidgets
 pandas
 requests
-scipy
-urllib
-ipywidgets

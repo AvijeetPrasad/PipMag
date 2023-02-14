@@ -16,3 +16,9 @@ Use following tags for commit messages:
        [DOC] : Documentation only
        [REP] : Repository related changes (e.g., changes in the ignore list, remove files)
        [UTL] : Changes in utils
+
+## Setting up conda environment
+
+    conda create --name pipmag python=3.9
+    conda activate pipmag
+    conda install --file requirements.txt
