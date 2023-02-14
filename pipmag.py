@@ -206,12 +206,12 @@ def get_date_time_from_link(link,\
 
 def get_date_time_from_link_list(links_list, \
     date_pattern_list=[r'(\d{4}-\d{2}-\d{2})_(\d{2}:\d{2}:\d{2})',\
-                       r'(\d{4}-\d{2}-\d{2})_(\d{6})',\
+                       r'(\d{4}-\d{2}-\d{2})_(\d{6})(?!\d)',\
                        r'(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2}:\d{2})',\
-                       r'(\d{2}[a-zA-Z]{3}\d{2})_(\d{6})',\
-                       r'(\d{2}[a-zA-Z]{3}\d{4})_(\d{6})',\
-                       r'(\d{4}.\d{2}.\d{2})_(\d{6})',\
-                       r'(\d{8})_(\d{6})']\
+                       r'(\d{2}[a-zA-Z]{3}\d{2})_(\d{6})(?!\d)',\
+                       r'(\d{2}[a-zA-Z]{3}\d{4})_(\d{6})(?!\d)',\
+                       r'(\d{4}\.\d{2}\.\d{2})_(\d{6})(?!\d)',\
+                       r'(\d{8})_(\d{6})(?!\d)']\
                         ):
 # define a function that takes date_pattern_list as input and sequentially tries to get the date and time from the image link and 
     date_time_list = []
@@ -252,7 +252,7 @@ def get_invalid_dates(date_time_list, date_format_list=['%Y-%m-%d_%H:%M:%S','%d%
         print(f'All dates in date_time_list are valid')
     else:
         print(f"Invalid dates: {invalid_dates}")
-    return None
+    return invalid_dates
 
 def convert_to_datetime(date_time_list,date_format_list=['%Y-%m-%d_%H:%M:%S','%d%b%Y_%H:%M:%S','%Y.%m.%d_%H:%M:%S','%Y-%m-%d %H:%M:%S.%f','%Y%m%d_%H%M%S','%Y%m%d_%H:%M:%S']):
 # define a function that takes a list of datetime strings, uses the date_format_list to convert them to datetime objects and returns a list of datetime objects
