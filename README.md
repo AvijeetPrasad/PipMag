@@ -22,3 +22,12 @@ Use following tags for commit messages:
     mamba create --name pipmag 
     mamba activate pipmag
     mamba install --file requirements.txt
+
+## Creating the SST observations database
+
+- Open the file `quicklook.ipynb`
+- Go to the section marked `Start here: Loading the existing dataframe`
+- Load the latest pickle file and run the block containing the widget.
+- Enter a `Year, Month, Day, Time` combination and click on Show to see the quicklook movie options.
+- Note the `Index` value and enter the number in the widget below.
+- Any predefined info will be loaded in the boxes which can now be updated.
