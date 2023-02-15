@@ -614,6 +614,7 @@ class VideoSelector2:
                 #print("Selected link index:", self.selected_index)
                 display(widgets.HTML(f"<h3><b>Index:</b> {self.selected_index}</h3>"))
 
+
         # Function to update the index dropdown based on the selected time
         def update_values(b):
             index = int(self.selected_index)
@@ -665,10 +666,11 @@ class VideoSelector2:
         display(self.time_dropdown)
         display(self.links_dropdown)
         display(self.display_button)
+        
+        display(self.output)
 
+        # Details at the bottom of the video       
         for column_name in self.column_names:
             display(self.value_texts[column_name])
         display(self.update_button)
         
-        
-        display(self.output)
