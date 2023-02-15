@@ -101,6 +101,8 @@ def get_obs_dates_list(obs_dates):
     obs_dates_list = [s.replace('.', '-') for s in obs_dates]
     # remove the repeating dates from obs_dates_list by using set
     obs_dates_list = list(set(obs_dates_list))
+    # sort the list again, as set does not preserve the ordering
+    obs_dates_list = sorted(obs_dates_list)
     return obs_dates_list
 
 
