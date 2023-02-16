@@ -6,7 +6,7 @@ from datetime import datetime
 import glob
 import os
 import pandas as pd
-from IPython.display import display, clear_output, Video, HTML
+from IPython.display import display, clear_output, Video
 import ipywidgets as widgets
 from tabulate import tabulate
 
@@ -530,6 +530,227 @@ class VideoSelector2:
     def __init__(self, df, column_names):
         self.df = df
         self.column_names = column_names
+
+    def create_widget(self):
+        # Create a dropdown widget for the year column
+        self.year_dropdown = widgets.Dropdown(options=self.df['year'].unique(), description='Year:')
+
+        # Create a dropdown widget for the month column
+        self.month_dropdown = widgets.Dropdown(options=[], description='Month:')
+
+        # Create a dropdown widget for the day column
+        self.day_dropdown = widgets.Dropdown(options=[], description='Day:')
+
+        # Create a dropdown widget for the time column
+        self.time_dropdown = widgets.Dropdown(options=[], description='Time:')
+
+        # Create a dropdown widget for the links column
+        self.links_dropdown = widgets.Dropdown(options=[], description='Links:')
+
+        # Create a variable to store the selected link
+        self.selected_link = ''
+
+        # Create an output widget to display the selected link
+        self.output = widgets.Output()
+
+
+        self.value_texts = {}
+        for column_name in self.column_names:
+            self.value_texts[column_name] = widgets.Text(description=f'{column_name}:')
+        self.update_button = widgets.Button(description='Update')
+
+        # Function to update the month dropdown based on the selected year
+        def update_months(change):
+            year = change.new
+            months = self.df[self.df['year'] == year]['month'].unique()
+            self.month_dropdown.options = months
+
+        # Function to update the day dropdown based on the selected month and year
+        def update_days(change):
+            year = self.year_dropdown.value
+            month = change.new
+            days = self.df[(self.df['year'] == year) & (self.df['month'] == month)]['day'].unique()
+            self.day_dropdown.options = days
+
+        # Function to update the time dropdown based on the selected day, month, and year
+        def update_time(change):
+            year = self.year_dropdown.value
+            month = self.month_dropdown.value
+            day = change.new
+            time = self.df[(self.df['year'] == year) & (self.df['month'] == month) & (self.df['day'] == day)]['time'].unique()
+            self.time_dropdown.options = time
+
+        # Function to update the links dropdown based on the selected time
+        def update_links(change):
+            time = change.new
+            links = list(self.df[self.df['time'] == time]['video_links'].values[0])
+            self.links_dropdown.options = links
+
+        # Function to update the selected link when the links dropdown value changes
+        def links_value_changed(change):
+            self.selected_link = change.new
+            self.matches = self.df[self.df['video_links'].apply(lambda x: self.selected_link in x)]
+            self.selected_index = self.matches.index[0]
+
+        # Function to display the selected link when the display button is pressed
+        def display_selected_link(b):
+            with self.output:
+                clear_output()
+                display(Video(self.selected_link, html_attributes='controls autoplay loop'))
+                #print("Selected link index:", self.selected_index)
+                display(widgets.HTML(f"<h3><b>Index:</b> {self.selected_index}</h3>"))
+
+
+        # Function to update the index dropdown based on the selected time
+        def update_values(b):
+            index = int(self.selected_index)
+            for column_name in self.column_names:
+                value = self.value_texts[column_name].value
+                if isinstance(self.df.at[index, column_name], list):
+                    self.df.at[index, column_name] = value.split(',')
+                else:
+                    self.df.at[index, column_name] = value
+            with self.output:
+                clear_output()
+                display(widgets.HTML(f"<b>{', '.join(self.column_names)} updated for index {index}</b>"))
+
+        def display_existing_values(change):
+            if self.selected_index:
+                index = int(self.selected_index)
+                for column_name in self.column_names:
+                    existing_value = self.df.at[index, column_name]
+                    if isinstance(existing_value, list):
+                        self.value_texts[column_name].value = ', '.join(existing_value)
+                    else:
+                        self.value_texts[column_name].value = existing_value if pd.notna(existing_value) else ""
+
+
+        # Register the functions to be called when the year, month, and day dropdown values change
+        self.year_dropdown.observe(update_months, names='value')
+        self.month_dropdown.observe(update_days, names='value')
+        self.day_dropdown.observe(update_time, names='value')
+
+        # Register the function to be called when the time dropdown value changes
+        self.time_dropdown.observe(update_links, names='value')
+
+        # Register the function to be called when the links dropdown value changes
+        self.links_dropdown.observe(links_value_changed, names='value')
+
+        #Create a button widget to display the selected link
+        self.display_button = widgets.Button(description='Show')
+        self.display_button.on_click(display_selected_link)
+
+        # Register the function to be called when the links dropdown value changes
+        self.links_dropdown.observe(links_value_changed, names='value')
+        self.links_dropdown.observe(display_existing_values, names='value')
+        
+        
+        #Display the dropdown widgets, the button, and the output widget
+        display(self.year_dropdown)
+        display(self.month_dropdown)
+        display(self.day_dropdown)
+        display(self.time_dropdown)
+        display(self.links_dropdown)
+        display(self.display_button)
+        
+        display(self.output)
+
+        # Details at the bottom of the video       
+        for column_name in self.column_names:
+            display(self.value_texts[column_name])
+        display(self.update_button)
+
+class ADSSearch:
+    '''Class to search the ADS API
+    example usage:
+    ads = ADSSearch()
+    results = ads.search(["SST", "CRISP", "25 May 2017"])
+    '''
+    def __init__(self):
+        self.api_token = os.environ.get("ADS_DEV_KEY")
+        if not self.api_token:
+            raise ValueError("ADS API key not found. Please set the ADS_DEV_KEY environmental variable.")
+    
+    def search(self, search_terms):
+        headers = {"Authorization": f"Bearer {self.api_token}"}
+
+        # Construct the query string
+        query_terms = " AND ".join(f"full:\"{term}\"" for term in search_terms)
+        query = f"{query_terms}"
+        
+        # Set up the query parameters
+        params = {
+            "q": query,
+            "fl": "id,title,bibcode",
+            "rows": 100,
+            "sort": "date desc"
+        }
+
+        # Make the API request
+        response = requests.get("https://api.adsabs.harvard.edu/v1/search/query", headers=headers, params=params)
+        response_json = response.json()
+
+        # Process the response and return the results
+        results = []
+        for paper in response_json["response"]["docs"]:
+            result = {
+                "title": paper["title"][0],
+                "bibcode": paper["bibcode"],
+                "url": f"https://ui.adsabs.harvard.edu/abs/{paper['bibcode']}"
+            }
+            results.append(result)
+        return results
+
+def datetime_to_string(dt):
+# convert datetime to string in the format 25 May 2017 if the date is two digits, otherwise 6 June 2019
+    if dt.day < 10:
+        return f"{dt.day} {dt.strftime('%B')} {dt.year}"
+    else:
+        return f"{dt.day} {dt.strftime('%B')} {dt.year}"
+
+def get_search_terms(df,index):
+# function that take dataframe index, reads the datetime, converts into string, and appends in to the instruments list to search ADS    
+    date_string = datetime_to_string(df.at[index,'date_time'])
+    instruments = df.at[index,'instruments']
+    #append date string to instruments list
+    search_terms = ['SST'] + instruments + [date_string]
+    return search_terms
+
+def get_ads_results(search_terms):
+# function that takes a list of search terms and returns the ADS results
+    ads = ADSSearch()
+    results = ads.search(search_terms)
+    return results
+
+class ADS_Search(ADSSearch):
+    '''Class to search the ADS API based on data in a Pandas DataFrame
+    example usage:
+    search = ADS_Search(dataframe)
+    search.get_results(0)
+    '''
+    def __init__(self, dataframe):
+        self.dataframe = dataframe
+
+    def get_results(self, index, pretty_print=False):
+        search_terms = get_search_terms(self.dataframe, index)
+        results = get_ads_results(search_terms)
+
+        if pretty_print:
+            headers = ["#", "Title", "Bibcode", "URL"]
+            rows = [[i+1, result["title"], result["bibcode"], result["url"]] for i, result in enumerate(results)]
+            print(tabulate(rows, headers=headers))
+        else:
+            print(f"Search terms: {search_terms}")
+            for i, result in enumerate(results):
+                print(f"Result {i+1}:")
+                print(f"Title: {result['title']}")
+                print(f"Bibcode: {result['bibcode']}")
+                print(f"URL: {result['url']}")
+
+class VideoSelector3:
+    def __init__(self, df, column_names):
+        self.df = df
+        self.column_names = column_names
         
         # Adds a search of papers according to the selected day
         self.ads = ADS_Search(df)
@@ -673,97 +894,3 @@ class VideoSelector2:
         for column_name in self.column_names:
             display(self.value_texts[column_name])
         display(self.update_button)
-
-class ADSSearch:
-    '''Class to search the ADS API
-    example usage:
-    ads = ADSSearch()
-    results = ads.search(["SST", "CRISP", "25 May 2017"])
-    '''
-    def __init__(self):
-        self.api_token = os.environ.get("ADS_DEV_KEY")
-        if not self.api_token:
-            raise ValueError("ADS API key not found. Please set the ADS_DEV_KEY environmental variable.")
-    
-    def search(self, search_terms):
-        headers = {"Authorization": f"Bearer {self.api_token}"}
-
-        # Construct the query string
-        query_terms = " AND ".join(f"full:\"{term}\"" for term in search_terms)
-        query = f"{query_terms}"
-        
-        # Set up the query parameters
-        params = {
-            "q": query,
-            "fl": "id,title,bibcode",
-            "rows": 100,
-            "sort": "date desc"
-        }
-
-        # Make the API request
-        response = requests.get("https://api.adsabs.harvard.edu/v1/search/query", headers=headers, params=params)
-        response_json = response.json()
-
-        # Process the response and return the results
-        results = []
-        for paper in response_json["response"]["docs"]:
-            result = {
-                "title": paper["title"][0],
-                "bibcode": paper["bibcode"],
-                "url": f"https://ui.adsabs.harvard.edu/abs/{paper['bibcode']}"
-            }
-            results.append(result)
-        return results
-
-def datetime_to_string(dt):
-# convert datetime to string in the format 25 May 2017 if the date is two digits, otherwise 6 June 2019
-    if dt.day < 10:
-        return f"{dt.day} {dt.strftime('%B')} {dt.year}"
-    else:
-        return f"{dt.day} {dt.strftime('%B')} {dt.year}"
-
-def get_search_terms(df,index):
-# function that take dataframe index, reads the datetime, converts into string, and appends in to the instruments list to search ADS    
-    date_string = datetime_to_string(df.at[index,'date_time'])
-    instruments = df.at[index,'instruments']
-    #append date string to instruments list
-    search_terms = ['SST'] + instruments + [date_string]
-    return search_terms
-
-def get_ads_results(search_terms):
-# function that takes a list of search terms and returns the ADS results
-    ads = ADSSearch()
-    results = ads.search(search_terms)
-    return results
-
-class ADS_Search(ADSSearch):
-    '''Class to search the ADS API based on data in a Pandas DataFrame
-    example usage:
-    search = ADS_Search(dataframe)
-    search.get_results(0)
-    '''
-    def __init__(self, dataframe):
-        self.dataframe = dataframe
-
-    def get_results(self, index, pretty_print=False):
-        search_terms = get_search_terms(self.dataframe, index)
-        results = get_ads_results(search_terms)
-
-        if pretty_print:
-            headers = ["#", "Title", "Bibcode", "URL"]
-            rows = [[i+1, result["title"], result["bibcode"], result["url"]] for i, result in enumerate(results)]
-
-            df = pd.DataFrame(rows, columns=headers)
-            if len(rows)> 0:
-                display(HTML(df.to_html(render_links=True, escape=False,index=False)))
-                
-            # print("\r", tabulate(rows, headers=headers), end="")
-
-            
-        else:
-            print(f"Search terms: {search_terms}")
-            for i, result in enumerate(results):
-                print(f"Result {i+1}:")
-                print(f"Title: {result['title']}")
-                print(f"Bibcode: {result['bibcode']}")
-                print(f"URL: {result['url']}")
