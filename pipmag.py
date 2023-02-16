@@ -525,23 +525,10 @@ class DataUpdater:
         display(self.update_button)
         display(self.output)
 
-
-
-
-
-
-
-
-
-
-
-
 class VideoSelector2:
     def __init__(self, df, column_names):
         self.df = df
         self.column_names = column_names
-
-
 
     def create_widget(self):
         # Create a dropdown widget for the year column
@@ -673,4 +660,90 @@ class VideoSelector2:
         for column_name in self.column_names:
             display(self.value_texts[column_name])
         display(self.update_button)
+
+class ADSSearch:
+    '''Class to search the ADS API
+    example usage:
+    ads = ADSSearch()
+    results = ads.search(["SST", "CRISP", "25 May 2017"])
+    '''
+    def __init__(self):
+        self.api_token = os.environ.get("ADS_DEV_KEY")
+        if not self.api_token:
+            raise ValueError("ADS API key not found. Please set the ADS_DEV_KEY environmental variable.")
+    
+    def search(self, search_terms):
+        headers = {"Authorization": f"Bearer {self.api_token}"}
+
+        # Construct the query string
+        query_terms = " AND ".join(f"full:\"{term}\"" for term in search_terms)
+        query = f"{query_terms}"
         
+        # Set up the query parameters
+        params = {
+            "q": query,
+            "fl": "id,title,bibcode",
+            "rows": 100,
+            "sort": "date desc"
+        }
+
+        # Make the API request
+        response = requests.get("https://api.adsabs.harvard.edu/v1/search/query", headers=headers, params=params)
+        response_json = response.json()
+
+        # Process the response and return the results
+        results = []
+        for paper in response_json["response"]["docs"]:
+            result = {
+                "title": paper["title"][0],
+                "bibcode": paper["bibcode"],
+                "url": f"https://ui.adsabs.harvard.edu/abs/{paper['bibcode']}"
+            }
+            results.append(result)
+        return results
+
+def datetime_to_string(dt):
+# convert datetime to string in the format 25 May 2017 if the date is two digits, otherwise 6 June 2019
+    if dt.day < 10:
+        return f"{dt.day} {dt.strftime('%B')} {dt.year}"
+    else:
+        return f"{dt.day} {dt.strftime('%B')} {dt.year}"
+
+def get_search_terms(df,index):
+# function that take dataframe index, reads the datetime, converts into string, and appends in to the instruments list to search ADS    
+    date_string = datetime_to_string(df.at[index,'date_time'])
+    instruments = df.at[index,'instruments']
+    #append date string to instruments list
+    search_terms = ['SST'] + instruments + [date_string]
+    return search_terms
+
+def get_ads_results(search_terms):
+# function that takes a list of search terms and returns the ADS results
+    ads = ADSSearch()
+    results = ads.search(search_terms)
+    return results
+
+# create a class called ADS_Search which inherits from the ADS_Search class and uses the get_search_terms and get_ads_results functions to search ADS and display the results for a given index and dataframe
+class ADS_Search(ADSSearch):
+    def __init__(self,df):
+        self.df = df
+        self.index = None
+        self.search_terms = None
+        self.results = None
+        self.output = widgets.Output()
+        
+    def search(self,index):
+        self.index = index
+        self.search_terms = get_search_terms(self.df,self.index)
+        self.results = get_ads_results(self.search_terms)
+        return self.results
+    
+    def display(self):
+        with self.output:
+            clear_output()
+            display(widgets.HTML(f"<h3><b>Index:</b> {self.index}</h3>"))
+            display(widgets.HTML(f"<h3><b>Search Terms:</b> {', '.join(self.search_terms)}</h3>"))
+            display(widgets.HTML(f"<h3><b>Number of Results:</b> {len(self.results)}</h3>"))
+            for result in self.results:
+                display(widgets.HTML(f"<a href='{result['url']}' target='_blank'>{result['title']}</a>"))
+        display(self.output)
