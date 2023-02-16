@@ -6,7 +6,7 @@ from datetime import datetime
 import glob
 import os
 import pandas as pd
-from IPython.display import display, clear_output, Video
+from IPython.display import display, clear_output, Video, HTML
 import ipywidgets as widgets
 from tabulate import tabulate
 
@@ -738,7 +738,18 @@ class ADS_Search(ADSSearch):
         if pretty_print:
             headers = ["#", "Title", "Bibcode", "URL"]
             rows = [[i+1, result["title"], result["bibcode"], result["url"]] for i, result in enumerate(results)]
-            print(tabulate(rows, headers=headers))
+            #print(tabulate(rows, headers=headers))
+            df = pd.DataFrame(rows, columns=headers)
+            if len(rows)> 0:
+                #display(HTML(df.to_html(render_links=True, escape=False,index=False)))
+                # Generate the HTML table with links and disable HTML escaping
+                html_table = df.to_html(render_links=True, escape=False, index=False)
+
+                # Define a CSS style rule to left-align the table cells
+                cell_style = "td { text-align: left; }"
+
+                # Use the HTML module to display the table with the style rule
+                display(HTML(f'<style>{cell_style}</style>{html_table}'))
         else:
             print(f"Search terms: {search_terms}")
             for i, result in enumerate(results):
