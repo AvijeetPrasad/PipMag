@@ -6,7 +6,7 @@ from datetime import datetime
 import glob
 import os
 import pandas as pd
-from IPython.display import display, clear_output, Video
+from IPython.display import display, clear_output, Video, HTML
 import ipywidgets as widgets
 from tabulate import tabulate
 
@@ -530,6 +530,10 @@ class VideoSelector2:
     def __init__(self, df, column_names):
         self.df = df
         self.column_names = column_names
+        
+        # Adds a search of papers according to the selected day
+        self.ads = ADS_Search(df)
+        
 
     def create_widget(self):
         # Create a dropdown widget for the year column
@@ -553,7 +557,7 @@ class VideoSelector2:
         # Create an output widget to display the selected link
         self.output = widgets.Output()
 
-
+        # Create a text field to display the properties of the selected observations
         self.value_texts = {}
         for column_name in self.column_names:
             self.value_texts[column_name] = widgets.Text(description=f'{column_name}:')
@@ -591,6 +595,7 @@ class VideoSelector2:
             self.selected_link = change.new
             self.matches = self.df[self.df['video_links'].apply(lambda x: self.selected_link in x)]
             self.selected_index = self.matches.index[0]
+            
 
         # Function to display the selected link when the display button is pressed
         def display_selected_link(b):
@@ -598,8 +603,11 @@ class VideoSelector2:
                 clear_output()
                 display(Video(self.selected_link, html_attributes='controls autoplay loop'))
                 #print("Selected link index:", self.selected_index)
+                
+                # Display the ADS results
+                self.ads.get_results(self.selected_index, pretty_print=True)
+                
                 display(widgets.HTML(f"<h3><b>Index:</b> {self.selected_index}</h3>"))
-
 
         # Function to update the index dropdown based on the selected time
         def update_values(b):
@@ -614,7 +622,9 @@ class VideoSelector2:
                 clear_output()
                 display(widgets.HTML(f"<b>{', '.join(self.column_names)} updated for index {index}</b>"))
 
+
         def display_existing_values(change):
+            
             if self.selected_index:
                 index = int(self.selected_index)
                 for column_name in self.column_names:
@@ -623,7 +633,10 @@ class VideoSelector2:
                         self.value_texts[column_name].value = ', '.join(existing_value)
                     else:
                         self.value_texts[column_name].value = existing_value if pd.notna(existing_value) else ""
+                
 
+            
+            
 
         # Register the functions to be called when the year, month, and day dropdown values change
         self.year_dropdown.observe(update_months, names='value')
@@ -645,7 +658,7 @@ class VideoSelector2:
         self.links_dropdown.observe(display_existing_values, names='value')
         
         
-        #Display the dropdown widgets, the button, and the output widget
+        # Display the dropdown widgets, the button, and the output widget
         display(self.year_dropdown)
         display(self.month_dropdown)
         display(self.day_dropdown)
@@ -653,6 +666,7 @@ class VideoSelector2:
         display(self.links_dropdown)
         display(self.display_button)
         
+        # Display the video
         display(self.output)
 
         # Details at the bottom of the video       
@@ -738,7 +752,14 @@ class ADS_Search(ADSSearch):
         if pretty_print:
             headers = ["#", "Title", "Bibcode", "URL"]
             rows = [[i+1, result["title"], result["bibcode"], result["url"]] for i, result in enumerate(results)]
-            print(tabulate(rows, headers=headers))
+
+            df = pd.DataFrame(rows, columns=headers)
+            if len(rows)> 0:
+                display(HTML(df.to_html(render_links=True, escape=False,index=False)))
+                
+            # print("\r", tabulate(rows, headers=headers), end="")
+
+            
         else:
             print(f"Search terms: {search_terms}")
             for i, result in enumerate(results):
