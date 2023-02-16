@@ -8,6 +8,7 @@ import os
 import pandas as pd
 from IPython.display import display, clear_output, Video
 import ipywidgets as widgets
+from tabulate import tabulate
 
 def add_timestamp(file_name):
 # update the add_timestamp function to detect the extension of the file name and add the timestamp before the extension
@@ -558,8 +559,6 @@ class VideoSelector2:
             self.value_texts[column_name] = widgets.Text(description=f'{column_name}:')
         self.update_button = widgets.Button(description='Update')
 
-
-
         # Function to update the month dropdown based on the selected year
         def update_months(change):
             year = change.new
@@ -723,27 +722,27 @@ def get_ads_results(search_terms):
     results = ads.search(search_terms)
     return results
 
-# create a class called ADS_Search which inherits from the ADS_Search class and uses the get_search_terms and get_ads_results functions to search ADS and display the results for a given index and dataframe
 class ADS_Search(ADSSearch):
-    def __init__(self,df):
-        self.df = df
-        self.index = None
-        self.search_terms = None
-        self.results = None
-        self.output = widgets.Output()
-        
-    def search(self,index):
-        self.index = index
-        self.search_terms = get_search_terms(self.df,self.index)
-        self.results = get_ads_results(self.search_terms)
-        return self.results
-    
-    def display(self):
-        with self.output:
-            clear_output()
-            display(widgets.HTML(f"<h3><b>Index:</b> {self.index}</h3>"))
-            display(widgets.HTML(f"<h3><b>Search Terms:</b> {', '.join(self.search_terms)}</h3>"))
-            display(widgets.HTML(f"<h3><b>Number of Results:</b> {len(self.results)}</h3>"))
-            for result in self.results:
-                display(widgets.HTML(f"<a href='{result['url']}' target='_blank'>{result['title']}</a>"))
-        display(self.output)
+    '''Class to search the ADS API based on data in a Pandas DataFrame
+    example usage:
+    search = ADS_Search(dataframe)
+    search.get_results(0)
+    '''
+    def __init__(self, dataframe):
+        self.dataframe = dataframe
+
+    def get_results(self, index, pretty_print=False):
+        search_terms = get_search_terms(self.dataframe, index)
+        results = get_ads_results(search_terms)
+
+        if pretty_print:
+            headers = ["#", "Title", "Bibcode", "URL"]
+            rows = [[i+1, result["title"], result["bibcode"], result["url"]] for i, result in enumerate(results)]
+            print(tabulate(rows, headers=headers))
+        else:
+            print(f"Search terms: {search_terms}")
+            for i, result in enumerate(results):
+                print(f"Result {i+1}:")
+                print(f"Title: {result['title']}")
+                print(f"Bibcode: {result['bibcode']}")
+                print(f"URL: {result['url']}")
