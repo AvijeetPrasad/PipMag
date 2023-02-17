@@ -680,7 +680,7 @@ class ADSSearch:
         # Set up the query parameters
         params = {
             "q": query,
-            "fl": "id,title,bibcode",
+            "fl": "id,title,bibcode,author,year",
             "rows": 100,
             "sort": "date desc"
         }
@@ -695,6 +695,8 @@ class ADSSearch:
             result = {
                 "title": paper["title"][0],
                 "bibcode": paper["bibcode"],
+                "first_author": paper["author"][0],
+                "year": paper["year"],
                 "url": f"https://ui.adsabs.harvard.edu/abs/{paper['bibcode']}"
             }
             results.append(result)
@@ -735,8 +737,8 @@ class ADS_Search(ADSSearch):
         results = get_ads_results(search_terms)
 
         if pretty_print:
-            headers = ["#", "Title", "Bibcode", "URL"]
-            rows = [[i+1, result["title"], result["bibcode"], result["url"]] for i, result in enumerate(results)]
+            headers = ["#", "Title", "First author", "Bibcode", "URL"]
+            rows = [[i+1, result["title"], result["first_author"], result["bibcode"], result["url"]] for i, result in enumerate(results)]
             df = pd.DataFrame(rows, columns=headers)
             if len(rows) > 0:
                 # Generate the HTML table with links and disable HTML escaping
@@ -755,6 +757,7 @@ class ADS_Search(ADSSearch):
                 print(f"Result {i+1}:")
                 print(f"Title: {result['title']}")
                 print(f"Bibcode: {result['bibcode']}")
+                print(result["first_author"])
                 print(f"URL: {result['url']}")
 
 class VideoSelector3:
