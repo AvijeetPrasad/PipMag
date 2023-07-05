@@ -1,15 +1,16 @@
 from setuptools import setup, find_packages
 
 setup(
-    name='pipmag',  
-    version='0.1',  
+    name='pipmag',
+    version='0.1',
     author='Avijeet Prasad',
     author_email='prasad.avijeet@gmail.com',
-    description='Pipeline for magnetic field reconstruction based on spectro-polarimetric observations of the solar atmosphere.',
+    description="""Pipeline for magnetic field reconstruction based on
+      spectro-polarimetric observations of the solar atmosphere.""",
     long_description=open('README.md', 'r').read(),
     long_description_content_type="text/markdown",
     url='https://github.com/AvijeetPrasad/pipmag',
-    packages=find_packages(),  
+    packages=find_packages(),
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
