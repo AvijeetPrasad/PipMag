@@ -260,7 +260,17 @@ def check_date_format(date_string, date_format_list):
     return None
 
 
-def get_invalid_dates(date_time_list, date_format_list=['%Y-%m-%d_%H:%M:%S', '%d%b%Y_%H:%M:%S', '%Y.%m.%d_%H:%M:%S', '%Y-%m-%d %H:%M:%S.%f', '%Y%m%d_%H%M%S', '%Y%m%d_%H:%M:%S']):
+def get_invalid_dates(
+    date_time_list,
+    date_format_list=[
+        '%Y-%m-%d_%H:%M:%S',
+        '%d%b%Y_%H:%M:%S',
+        '%Y.%m.%d_%H:%M:%S',
+        '%Y-%m-%d %H:%M:%S.%f',
+        '%Y%m%d_%H%M%S',
+        '%Y%m%d_%H:%M:%S'
+    ]
+):
     # define a function to take a list of date
     # and times compare it against a list of date and time formats and return the invalid dates
     invalid_dates = []
@@ -273,13 +283,23 @@ def get_invalid_dates(date_time_list, date_format_list=['%Y-%m-%d_%H:%M:%S', '%d
                 if date_format == date_format_list[-1]:
                     invalid_dates.append(date)
     if len(invalid_dates) == 0:
-        print(f'All dates in date_time_list are valid')
+        print('All dates in date_time_list are valid')
     else:
         print(f"Invalid dates: {invalid_dates}")
     return invalid_dates
 
 
-def convert_to_datetime(date_time_list, date_format_list=['%Y-%m-%d_%H:%M:%S', '%d%b%Y_%H:%M:%S', '%Y.%m.%d_%H:%M:%S', '%Y-%m-%d %H:%M:%S.%f', '%Y%m%d_%H%M%S', '%Y%m%d_%H:%M:%S']):
+def convert_to_datetime(
+    date_time_list,
+    date_format_list=[
+        '%Y-%m-%d_%H:%M:%S',
+        '%d%b%Y_%H:%M:%S',
+        '%Y.%m.%d_%H:%M:%S',
+        '%Y-%m-%d %H:%M:%S.%f',
+        '%Y%m%d_%H%M%S',
+        '%Y%m%d_%H:%M:%S'
+    ]
+):
     # define a function that takes a list of datetime strings,
     # uses the date_format_list to convert them to datetime objects and returns a list of datetime objects
     date_time_obj_list = []
