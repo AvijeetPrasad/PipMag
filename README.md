@@ -30,3 +30,8 @@ Use following tags for commit messages:
 - Load the latest pickle file and run the block containing the widget.
 - Enter a `Year, Month, Day, Time` combination and click on Show to see the quicklook movie options.
 - Any predefined info will be loaded in the boxes which can now be updated.
+
+## Setting up the `config.ini` file
+
+- Open the file `config.ini.example` file and save it as `config.ini`
+- Add the `ADS_DEV_KEY` to the `config.ini` file. To obtain the `ADS_DEV_KEY` follow the instructions [here](https://ui.adsabs.harvard.edu/help/api/)
