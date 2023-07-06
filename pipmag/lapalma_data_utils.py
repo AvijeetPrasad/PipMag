@@ -6,6 +6,45 @@ import pandas as pd
 
 
 def get_obs_years(la_palma_url='http://tsih3.uio.no/lapalma/', verbose=False):
+    """
+    Get the observation years available at the La Palma Observatory.
+
+    Parameters
+    ----------
+    la_palma_url : str, optional
+        The URL of the parent directory containing the observation year subdirectories
+        (default: 'http://tsih3.uio.no/lapalma/').
+    verbose : bool, optional
+        Flag indicating whether to print the observation years (default: False).
+
+    Returns
+    -------
+    list
+        A list of observation years available at the La Palma Observatory.
+
+    Dependencies
+    ------------
+    - requests: Required for making HTTP requests to retrieve the webpage content.
+    - BeautifulSoup: Required for parsing the HTML content of the webpage.
+
+    Notes
+    -----
+    Function Name: get_obs_years
+    This function retrieves the observation years available at the La Palma Observatory from the specified URL.
+    It makes an HTTP GET request to the URL and uses BeautifulSoup to parse the HTML content of the webpage.
+    It extracts the subdirectories (observation years) from the webpage links
+    and filters them to include only those starting with '20'.
+    If `verbose` is set to True, it prints the observation years in a formatted list.
+    The function returns a list of observation years available at the La Palma Observatory.
+
+    Examples
+    --------
+    >>> get_obs_years()
+    (The `get_obs_years` function is called without any arguments, and a list of observation years is returned.)
+    >>> get_obs_years(la_palma_url='http://tsih3.uio.no/lapalma/', verbose=True)
+    (The `get_obs_years` function is called with the verbose flag set to True,
+    and the observation years are printed in a formatted list.)
+    """
     # recursively get all the subdirectories in the parent url directory
     r = requests.get(la_palma_url)
     soup = BeautifulSoup(r.text, 'html.parser')
@@ -25,6 +64,57 @@ def get_obs_years(la_palma_url='http://tsih3.uio.no/lapalma/', verbose=False):
 
 
 def get_obs_dates(obs_years, lapalma_url='http://tsih3.uio.no/lapalma/', verbose=False):
+    """
+    Get the observation dates available at the La Palma Observatory for the specified observation years.
+
+    Parameters
+    ----------
+    obs_years : list
+        A list of observation years to retrieve the observation dates for.
+    lapalma_url : str, optional
+        The URL of the parent directory containing the observation date subdirectories
+        (default: 'http://tsih3.uio.no/lapalma/').
+    verbose : bool, optional
+        Flag indicating whether to print additional information,
+        such as the first entry, last entry, and total observing dates
+        (default: False).
+
+    Returns
+    -------
+    list
+        A list of observation dates available at the La Palma Observatory for the specified observation years.
+
+    Dependencies
+    ------------
+    - requests: Required for making HTTP requests to retrieve the webpage content.
+    - BeautifulSoup: Required for parsing the HTML content of the webpage.
+
+    Notes
+    -----
+    Function Name: get_obs_dates
+    This function retrieves the observation dates available at the La Palma Observatory
+    for the specified observation years.
+    It iterates over each observation year in the `obs_years` list
+    and makes an HTTP GET request to retrieve the webpage content of the corresponding directory.
+    It uses BeautifulSoup to parse the HTML content
+    and extract the subdirectories (observation dates) from the webpage links.
+    It filters the subdirectories to include only those starting with '20'
+    and containing two forward slashes ('/') to match the format '20??/20??-??-??/'.
+    If `verbose` is set to True, it prints additional information, such as the first entry,
+    last entry, and total number of observing dates.
+    The function returns a list of observation dates available
+    at the La Palma Observatory for the specified observation years.
+
+    Examples
+    --------
+    >>> obs_years = ['2022', '2023']
+    >>> get_obs_dates(obs_years)
+    (The `get_obs_dates` function is called with the specified observation years,
+    and a list of observation dates is returned.)
+    >>> get_obs_dates(obs_years, lapalma_url='http://tsih3.uio.no/lapalma/', verbose=True)
+    (The `get_obs_dates` function is called with the specified observation years
+    and verbose flag set to True, and additional information is printed along with the observation dates.)
+    """
     # recursively get all the subdirectories in the obs_years list
     obs_dates = []
     for subdir in obs_years:
@@ -49,6 +139,40 @@ def get_obs_dates(obs_years, lapalma_url='http://tsih3.uio.no/lapalma/', verbose
 
 
 def get_obs_dates_list(obs_dates):
+    """
+    Get a list of observation dates in the format '20??-??-??' from the provided observation dates.
+
+    Parameters
+    ----------
+    obs_dates : list
+        A list of observation dates to convert.
+
+    Returns
+    -------
+    list
+        A list of observation dates in the format '20??-??-??'.
+
+    Dependencies
+    ------------
+    None
+
+    Notes
+    -----
+    Function Name: get_obs_dates_list
+    This function takes a list of observation dates in the format '20??/20??-??-??/'
+    and extracts the date portion in the format '20??-??-??'.
+    It removes the trailing slash and the year in the front to get the date portion of each observation date.
+    If the separator between year, month, and day is not a dash ('-'), it replaces it with a dash.
+    The function then removes any repeating dates using a set and converts the set back to a sorted list.
+    The resulting list contains unique observation dates in the format '20??-??-??'.
+
+    Examples
+    --------
+    >>> obs_dates = ['2022/2022-01-01/', '2022/2022-02-15/', '2022/2022-01-01/', '2022/2022-03-10/']
+    >>> get_obs_dates_list(obs_dates)
+    (The `get_obs_dates_list` function is called with the provided observation dates,
+    and a list of unique observation dates in the format '20??-??-??' is returned.)
+    """
     # write a function that takes obs_dates as input a returns a list of dates in the format 20??-??-??
     # remove the trailing slash and the year in the front, and return the list in the form 20??-??-??
     obs_dates = [s[5:-1] for s in obs_dates]
@@ -62,6 +186,46 @@ def get_obs_dates_list(obs_dates):
 
 
 def get_files(url, file_extension):
+    """
+    Get a list of files with the specified file extension from the provided URL.
+
+    Parameters
+    ----------
+    url : str
+        The URL of the directory to search for files.
+    file_extension : str
+        The file extension to filter the files (e.g., '.txt', '.csv', '.pdf').
+
+    Returns
+    -------
+    list
+        A list of files with the specified file extension.
+
+    Dependencies
+    ------------
+    - requests: Required for making HTTP requests to retrieve the webpage content.
+    - BeautifulSoup: Required for parsing the HTML content of the webpage.
+
+    Notes
+    -----
+    Function Name: get_files
+    This function takes a URL and a file extension as input
+    and retrieves a list of files with the specified file extension from the provided URL.
+    It makes an HTTP GET request to the URL and uses BeautifulSoup to parse the HTML content of the webpage.
+    It extracts the links to files with the specified file extension and appends them to the `files` list.
+    If the `files` list is empty, it recursively searches the subdirectories
+    by making additional HTTP GET requests to the subdirectory URLs and calling the `get_files` function recursively.
+    The function returns a list of files with the specified file extension found in the provided URL
+    and its subdirectories.
+
+    Examples
+    --------
+    >>> url = 'http://example.com/files/'
+    >>> file_extension = '.txt'
+    >>> get_files(url, file_extension)
+    (The `get_files` function is called with the specified URL and file extension,
+    and a list of files with the specified file extension is returned.)
+    """
     # define a function that takes a url and a file extension as input and
     # returns a list of files with the given extension,
     # if the files are not founds it searches the subdirectories
@@ -82,6 +246,48 @@ def get_files(url, file_extension):
 
 
 def get_video_liks(obs_dates, lapalma_url='http://tsih3.uio.no/lapalma/'):
+    """
+    Get a dictionary of video links for the provided observation dates.
+
+    Parameters
+    ----------
+    obs_dates : list
+        A list of observation dates in the format '20??/20??-??-??/'.
+
+    lapalma_url : str, optional
+        The base URL of the La Palma directory (default is 'http://tsih3.uio.no/lapalma/').
+
+    Returns
+    -------
+    dict
+        A dictionary of video links for the observation dates. The keys are the observation dates in the format '20??-??-??',
+        and the values are lists of video links with either '.mp4' or '.mov' extensions.
+
+    Dependencies
+    ------------
+    - get_files: The `get_files` function is used internally to retrieve the list of files
+    with '.mp4' or '.mov' extensions from the provided URL.
+
+    Notes
+    -----
+    Function Name: get_video_links
+    This function takes a list of observation dates in the format '20??/20??-??-??/'
+    and retrieves a dictionary of video links for each observation date.
+    For each observation date, it appends the video links with either '.mp4'
+    or '.mov' extensions found in the corresponding directory to the dictionary.
+    The keys in the dictionary are the observation dates in the format '20??-??-??',
+    obtained by removing the trailing slash and replacing the dots with dashes.
+    If no video links are found for an observation date, an empty string is stored
+    as the corresponding value in the dictionary.
+    The function returns a dictionary of video links for the provided observation dates.
+
+    Examples
+    --------
+    >>> obs_dates = ['2022/2022-01-01/', '2022/2022-02-15/', '2022/2022-03-10/']
+    >>> get_video_links(obs_dates)
+    (The `get_video_links` function is called with the provided observation dates,
+    and a dictionary of video links for each observation date is returned.)
+    """
     # for the obs_dates list, get the list of files with either .mp4 or .mov
     # extension and save it as a dictionary wih the key being the observing date
     #  if the files are not founds then add a None value to the dictionary
@@ -104,6 +310,48 @@ def get_video_liks(obs_dates, lapalma_url='http://tsih3.uio.no/lapalma/'):
 
 
 def get_image_links(obs_dates, lapalma_url='http://tsih3.uio.no/lapalma/'):
+    """
+    Get a dictionary of image links for the provided observation dates.
+
+    Parameters
+    ----------
+    obs_dates : list
+        A list of observation dates in the format '20??/20??-??-??/'.
+
+    lapalma_url : str, optional
+        The base URL of the La Palma directory (default is 'http://tsih3.uio.no/lapalma/').
+
+    Returns
+    -------
+    dict
+        A dictionary of image links for the observation dates. The keys are the observation dates 
+        in the format '20??-??-??',
+        and the values are lists of image links with the '.jpg' extension.
+
+    Dependencies
+    ------------
+    - get_files: The `get_files` function is used internally to retrieve the list of files 
+    with the '.jpg' extension from the provided URL.
+
+    Notes
+    -----
+    Function Name: get_image_links
+    This function takes a list of observation dates in the format '20??/20??-??-??/'
+    and retrieves a dictionary of image links for each observation date.
+    For each observation date, it appends the image links with the '.jpg' extension
+    found in the corresponding directory to the dictionary.
+    The keys in the dictionary are the observation dates in the format '20??-??-??',
+    obtained by removing the trailing slash and replacing the dots with dashes.
+    If no image links are found for an observation date,
+    an empty string is stored as the corresponding value in the dictionary.
+    The function returns a dictionary of image links for the provided observation dates.
+
+    Examples
+    --------
+    >>> obs_dates = ['2022/2022-01-01/', '2022/2022-02-15/', '2022/2022-03-10/']
+    >>> get_image_links(obs_dates)
+    (The `get_image_links` function is called with the provided observation dates, and a dictionary of image links for each observation date is returned.)
+    """
     image_links = {}
     # i = 0
     for obs_date in obs_dates:
@@ -122,6 +370,40 @@ def get_image_links(obs_dates, lapalma_url='http://tsih3.uio.no/lapalma/'):
 
 
 def get_all_links(links):
+    """
+    Get a single list of all the links from the provided dictionary of links, sorted alphabetically.
+
+    Parameters
+    ----------
+    links : dict
+        A dictionary of links. The keys represent categories or labels, and the values are lists of links.
+
+    Returns
+    -------
+    list
+        A single list of all the links from the provided dictionary, sorted alphabetically.
+
+    Dependencies
+    ------------
+    None
+
+    Notes
+    -----
+    Function Name: get_all_links
+    This function takes a dictionary of links as input and returns a single list containing
+    all the links from the dictionary.
+    The links are extracted from the dictionary values, excluding any empty values represented by an empty string ('').
+    The resulting list of links is sorted alphabetically.
+    The function also prints the total number of links in the list.
+    The function returns the sorted list of links.
+
+    Examples
+    --------
+    >>> links = {'Category 1': ['link1', 'link2', 'link3'], 'Category 2': ['link4', 'link5']}
+    >>> get_all_links(links)
+    (The `get_all_links` function is called with the provided dictionary of links,
+    and a single sorted list of all the links is returned.)
+    """
     # define a function that takes image_links as input
     # and returns a single list of all the image links sorted alphabetically
     all_links = []
@@ -136,6 +418,45 @@ def get_all_links(links):
 
 def get_date_time_from_link(link,
                             pattern=r'(\d{4}-\d{2}-\d{2})_(\d{2}:\d{2}:\d{2})'):
+    """
+    Extracts date and time information from a given string using a regular expression pattern.
+
+    Parameters
+    ----------
+    link : str
+        The input string from which to extract the date and time information.
+    pattern : str, optional
+        The regular expression pattern used to capture the date and time as groups 1 and 2, respectively.
+        The default pattern is r'(\d{4}-\d{2}-\d{2})_(\d{2}:\d{2}:\d{2})'.
+
+    Returns
+    -------
+    str or None
+        If the date and time information is found in the input string,
+        it returns a formatted string with the date and time
+        in the format 'YYYY-MM-DD_HH:MM:SS'. If the date and time information is not found, it returns None.
+
+    Dependencies
+    ------------
+    re (Regular Expression) module
+
+    Notes
+    -----
+    Function Name: get_date_time_from_link
+    This function takes a string and a regular expression pattern as input
+    and extracts the date and time information from the string.
+    The pattern is used to match and capture the date and time information as groups 1 and 2.
+    If the date and time information is found, it is formatted into a string in the 'YYYY-MM-DD_HH:MM:SS' format.
+    The function returns the formatted string or None if the date and time information is not found.
+
+    Examples
+    --------
+    >>> link = 'http://example.com/2022-01-01_12:34:56/image.jpg'
+    >>> get_date_time_from_link(link)
+    '2022-01-01_12:34:56'
+    (The `get_date_time_from_link` function is called with the provided link,
+    and the formatted date and time string is returned.)
+    """
     # write a function that takes a string as input and a regex pattern which captures the date and time as groups 1
     # and 2 and returns a list of tuples with the date and time as the first and second element of the tuple
     # get the date and time from the image link
