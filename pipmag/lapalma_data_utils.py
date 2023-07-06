@@ -260,7 +260,8 @@ def get_video_liks(obs_dates, lapalma_url='http://tsih3.uio.no/lapalma/'):
     Returns
     -------
     dict
-        A dictionary of video links for the observation dates. The keys are the observation dates in the format '20??-??-??',
+        A dictionary of video links for the observation dates.
+        The keys are the observation dates in the format '20??-??-??',
         and the values are lists of video links with either '.mp4' or '.mov' extensions.
 
     Dependencies
@@ -324,13 +325,13 @@ def get_image_links(obs_dates, lapalma_url='http://tsih3.uio.no/lapalma/'):
     Returns
     -------
     dict
-        A dictionary of image links for the observation dates. The keys are the observation dates 
+        A dictionary of image links for the observation dates. The keys are the observation dates
         in the format '20??-??-??',
         and the values are lists of image links with the '.jpg' extension.
 
     Dependencies
     ------------
-    - get_files: The `get_files` function is used internally to retrieve the list of files 
+    - get_files: The `get_files` function is used internally to retrieve the list of files
     with the '.jpg' extension from the provided URL.
 
     Notes
@@ -350,7 +351,8 @@ def get_image_links(obs_dates, lapalma_url='http://tsih3.uio.no/lapalma/'):
     --------
     >>> obs_dates = ['2022/2022-01-01/', '2022/2022-02-15/', '2022/2022-03-10/']
     >>> get_image_links(obs_dates)
-    (The `get_image_links` function is called with the provided observation dates, and a dictionary of image links for each observation date is returned.)
+    (The `get_image_links` function is called with the provided observation dates,
+    and a dictionary of image links for each observation date is returned.)
     """
     image_links = {}
     # i = 0
@@ -487,6 +489,58 @@ def get_date_time_from_link_list(links_list,
                                                     r'(\d{4}\.\d{2}\.\d{2})_(\d{6})(?!\d)',
                                                     r'(\d{8})_(\d{6})(?!\d)']
                                  ):
+    """
+    Extracts date and time information from a list of image links using multiple date patterns.
+
+    Parameters
+    ----------
+    links_list : list
+        A list of image links from which to extract the date and time information.
+    date_pattern_list : list, optional
+        A list of regular expression patterns used to capture the date and time from the image links.
+        Each pattern is sequentially applied until a match is found.
+        The default patterns include common date formats such as 'YYYY-MM-DD_HH:MM:SS', 'YYYY-MM-DD_HHMMSS',
+        'YYYY-MM-DDTHH:MM:SS', 'DDMonYY_HHMMSS', 'DDMonYYYY_HHMMSS', 'YYYY.MM.DD_HHMMSS', and 'YYYYMMDD_HHMMSS'.
+        Note that the patterns are tried in the order they appear in the list.
+
+    Returns
+    -------
+    tuple
+        A tuple containing two lists: date_time_list and date_time_not_found_list.
+        - date_time_list : list
+            A list of formatted date and time strings extracted from the image links.
+            The format of the date and time strings is 'YYYY-MM-DD_HH:MM:SS'.
+        - date_time_not_found_list : list
+            A list of image links for which the date
+            and time information could not be found using any of the provided patterns.
+
+    Dependencies
+    ------------
+    re (Regular Expression) module
+    get_date_time_from_link function
+
+    Notes
+    -----
+    Function Name: get_date_time_from_link_list
+    This function takes a list of image links and a list of date patterns as input.
+    It sequentially tries to extract the date and time information from each image link using the provided patterns.
+    If a match is found, the date and time information is formatted into a string in the 'YYYY-MM-DD_HH:MM:SS' format
+    and added to the date_time_list.
+    If the date and time information is not found using any of the patterns,
+    the image link is added to the date_time_not_found_list.
+    The function returns a tuple containing the date_time_list and date_time_not_found_list.
+
+    Examples
+    --------
+    >>> links = ['http://example.com/2022-01-01_12:34:56/image.jpg',
+                 'http://example.com/20220101_123456/image.jpg',
+                 'http://example.com/2022-01-01T12:34:56/image.jpg']
+    >>> get_date_time_from_link_list(links)
+    (['2022-01-01_12:34:56'], ['http://example.com/20220101_123456/image.jpg',
+      'http://example.com/2022-01-01T12:34:56/image.jpg'])
+    (The `get_date_time_from_link_list` function is called with the provided links,
+    and the formatted date and time string and unmatched links are returned in a tuple.)
+    """
     # define a function that takes date_pattern_list as input
     # and sequentially tries to get the date and time from the image link and
     date_time_list = []
@@ -503,6 +557,44 @@ def get_date_time_from_link_list(links_list,
 
 
 def check_date_format(date_string, date_format_list):
+    """
+    Checks if a date string matches any of the specified date formats.
+
+    Parameters
+    ----------
+    date_string : str
+        The date string to be checked.
+    date_format_list : list
+        A list of date formats against which the date string will be compared.
+
+    Returns
+    -------
+    str or None
+        If the date string matches any of the specified date formats, the matching format is returned as a string.
+        If the date string does not match any of the specified formats, None is returned.
+
+    Dependencies
+    ------------
+    datetime module from datetime library
+
+    Notes
+    -----
+    Function Name: check_date_format
+    This function takes a date string and a list of date formats as input.
+    It iterates through the date_format_list and attempts to match the date string with each format.
+    If a match is found, the matching format is returned as a string.
+    If the date string does not match any of the specified formats, None is returned.
+    Note that the function assumes the date_string is in a valid format and does not perform any validation.
+
+    Examples
+    --------
+    >>> date_str = '2022-01-01_12:34:56'
+    >>> format_list = ['%Y-%m-%d_%H:%M:%S', '%Y%m%d_%H%M%S', '%Y-%m-%dT%H:%M:%S']
+    >>> check_date_format(date_str, format_list)
+    '%Y-%m-%d_%H:%M:%S'
+    (The `check_date_format` function is called with the provided date string and format list.
+    The matching format '%Y-%m-%d_%H:%M:%S' is returned.)
+    """
     # check if the format of the  string '2013-06-30_09:15:50' matches the any of the formats in the date_format_list:
     #  if it does, return the format if it does not, return None
     for date_format in date_format_list:
@@ -526,6 +618,50 @@ def get_invalid_dates(
         '%Y%m%d_%H:%M:%S'
     ]
 ):
+    """
+    Retrieves the invalid dates from a list of date-time strings by comparing them against a list of date formats.
+
+    Parameters
+    ----------
+    date_time_list : list
+        A list of date-time strings to be checked for validity.
+    date_format_list : list, optional
+        A list of date formats against which the date-time strings will be compared.
+        Default formats include '%Y-%m-%d_%H:%M:%S', '%d%b%Y_%H:%M:%S', '%Y.%m.%d_%H:%M:%S',
+        '%Y-%m-%d %H:%M:%S.%f', '%Y%m%d_%H%M%S', '%Y%m%d_%H:%M:%S'.
+        (Default: ['%Y-%m-%d_%H:%M:%S', '%d%b%Y_%H:%M:%S', '%Y.%m.%d_%H:%M:%S', '%Y-%m-%d %H:%M:%S.%f',
+                   '%Y%m%d_%H%M%S', '%Y%m%d_%H:%M:%S'])
+
+    Returns
+    -------
+    list
+        A list of invalid date-time strings that do not match any of the specified formats.
+
+    Dependencies
+    ------------
+    pandas module
+
+    Notes
+    -----
+    Function Name: get_invalid_dates
+    This function takes a list of date-time strings and an optional list of date formats as input.
+    It compares each date-time string with the formats in the date_format_list.
+    If a date-time string matches any of the formats, it is considered valid.
+    If a date-time string does not match any of the formats,
+    it is considered invalid and added to the invalid_dates list.
+    The function returns the list of invalid date-time strings.
+    Note that the function assumes the date-time strings are in a valid format and does not perform any validation.
+
+    Examples
+    --------
+    >>> dates = ['2022-01-01_12:34:56', '2022-13-01_12:34:56', '20220101_123456']
+    >>> get_invalid_dates(dates)
+    ['2022-13-01_12:34:56']
+    (The `get_invalid_dates` function is called with the provided list of date-time strings.
+    The date '2022-13-01_12:34:56' does not match any of the specified formats and is considered invalid.
+    The function returns a list containing the invalid date-time string.)
+    """
+
     # define a function to take a list of date
     # and times compare it against a list of date and time formats and return the invalid dates
     invalid_dates = []
@@ -555,6 +691,49 @@ def convert_to_datetime(
         '%Y%m%d_%H:%M:%S'
     ]
 ):
+    """
+    Converts a list of datetime strings to datetime objects using specified date formats.
+
+    Parameters
+    ----------
+    date_time_list : list
+        A list of datetime strings to be converted to datetime objects.
+    date_format_list : list, optional
+        A list of date formats used for parsing the datetime strings.
+        Default formats include '%Y-%m-%d_%H:%M:%S', '%d%b%Y_%H:%M:%S', '%Y.%m.%d_%H:%M:%S',
+        '%Y-%m-%d %H:%M:%S.%f', '%Y%m%d_%H%M%S', '%Y%m%d_%H:%M:%S'.
+        (Default: ['%Y-%m-%d_%H:%M:%S', '%d%b%Y_%H:%M:%S', '%Y.%m.%d_%H:%M:%S', '%Y-%m-%d %H:%M:%S.%f',
+                   '%Y%m%d_%H%M%S', '%Y%m%d_%H:%M:%S'])
+
+    Returns
+    -------
+    list
+        A list of datetime objects converted from the datetime strings.
+
+    Dependencies
+    ------------
+    datetime module
+
+    Notes
+    -----
+    Function Name: convert_to_datetime
+    This function takes a list of datetime strings and an optional list of date formats as input.
+    It iterates over each datetime string and tries to convert it to a datetime object using the specified formats.
+    If a datetime string matches any of the formats,
+    it is converted to a datetime object and added to the date_time_obj_list.
+    The function returns the list of datetime objects.
+    Note that the function assumes the datetime strings are in a valid format and does not perform any validation.
+
+    Examples
+    --------
+    >>> dates = ['2022-01-01_12:34:56', '01Jan2022_12:34:56']
+    >>> convert_to_datetime(dates)
+    [datetime.datetime(2022, 1, 1, 12, 34, 56)]
+    (The `convert_to_datetime` function is called with the provided list of datetime strings.
+    The first datetime string '2022-01-01_12:34:56' matches the specified format '%Y-%m-%d_%H:%M:%S'
+    and is successfully converted to a datetime object.
+    The function returns a list containing the converted datetime object.)
+    """
     # define a function that takes a list of datetime strings,
     # uses the date_format_list to convert them to datetime objects and returns a list of datetime objects
     date_time_obj_list = []
@@ -569,6 +748,44 @@ def convert_to_datetime(
 
 
 def search_string_in_list(string_list, pattern):
+    """
+    Searches for a string pattern in a list of strings and returns the matched strings.
+
+    Parameters
+    ----------
+    string_list : list
+        A list of strings to be searched.
+    pattern : str
+        The string pattern to search for in the list of strings.
+
+    Returns
+    -------
+    list or None
+        A list of matched strings if the pattern is found in the string_list.
+        If no matches are found, None is returned.
+
+    Dependencies
+    ------------
+    re module
+
+    Notes
+    -----
+    Function Name: search_string_in_list
+    This function takes a list of strings and a string pattern as input.
+    It iterates over each string in the string_list
+    and checks if the pattern is found in the string using regular expressions.
+    If a match is found, the string is added to the matched_string list.
+    If no matches are found, None is returned.
+    The function returns a list of matched strings or None.
+
+    Examples
+    --------
+    >>> strings = ['apple', 'banana', 'orange']
+    >>> search_string_in_list(strings, 'an')
+    ['banana', 'orange']
+    (The `search_string_in_list` function is called with the provided list of strings and the pattern 'an'.
+    Both 'banana' and 'orange' contain the pattern 'an' and are returned as the matched strings.)
+    """
     # define a function that searches for a string pattern in a list of strings if the pattern is found,
     # return the string, if the pattern is not found, return None
     # test_string = search_string_in_list(all_media_links_with_date_time, '0160904')
@@ -584,6 +801,47 @@ def search_string_in_list(string_list, pattern):
 
 
 def get_instrument_info(link_list, instrument_keywords):
+    """
+    Retrieves instrument information from a list of links based on instrument keywords.
+
+    Parameters
+    ----------
+    link_list : list
+        A list of links to search for instrument information.
+    instrument_keywords : dict
+        A dictionary where the keys represent instrument names
+        and the values are lists of keywords associated with each instrument.
+
+    Returns
+    -------
+    list or None
+        A list of instruments extracted from the link_list based on the instrument keywords.
+        If no instruments are found, None is returned.
+
+    Dependencies
+    ------------
+    None
+
+    Notes
+    -----
+    Function Name: get_instrument_info
+    This function takes a list of links and a dictionary of instrument keywords as input.
+    It iterates over each link in the link_list and checks if any of the instrument keywords are present in the link.
+    If a keyword is found, the corresponding instrument is added to the result set.
+    The function returns a list of instruments extracted from the link_list based on the instrument keywords,
+    or None if no instruments are found.
+
+    Examples
+    --------
+    >>> links = ['http://example.com/telescope', 'http://example.com/camera', 'http://example.com/spectrometer']
+    >>> instruments = {'Telescope': ['telescope'], 'Camera': ['camera'], 'Spectrometer': ['spectrometer']}
+    >>> get_instrument_info(links, instruments)
+    ['Telescope', 'Camera', 'Spectrometer']
+    (The `get_instrument_info` function is called with the provided list of links and instrument keywords.
+    The instruments 'Telescope', 'Camera', and 'Spectrometer'
+    are extracted based on the keywords found in the links and returned as a list.)
+    """
+
     # define a function that takes a list of links and a dictionary of instrument keywords
     # and returns a list of instruments
     result = set()
@@ -600,6 +858,43 @@ def get_instrument_info(link_list, instrument_keywords):
 
 
 def get_links_with_string(link_list, string_list):
+    """
+    Retrieves links that match specific string patterns from a list of links.
+
+    Parameters
+    ----------
+    link_list : list
+        A list of links to search.
+    string_list : list
+        A list of string patterns to search for in the links.
+
+    Returns
+    -------
+    list
+        A list of links that match the specified string patterns.
+
+    Dependencies
+    ------------
+    None
+
+    Notes
+    -----
+    Function Name: get_links_with_string
+    This function takes a list of links and a list of string patterns as input.
+    It iterates over each link in the link_list and checks if any of the string patterns are present in the link.
+    If a pattern is found, the link is added to the result list.
+    The function returns a list of links that match the specified string patterns.
+
+    Examples
+    --------
+    >>> links = ['http://example.com/image1.jpg', 'http://example.com/image2.jpg', 'http://example.com/video1.mp4']
+    >>> strings = ['image', 'video']
+    >>> get_links_with_string(links, strings)
+    ['http://example.com/image1.jpg', 'http://example.com/image2.jpg', 'http://example.com/video1.mp4']
+    (The `get_links_with_string` function is called with the provided list of links and string patterns.
+    The links that contain the strings 'image' or 'video' are returned as a list.)
+    """
+
     # define function that takes a list of links, searches for string patterns
     # and returns a list of the links that matrch the patterns
     result = []
@@ -611,6 +906,43 @@ def get_links_with_string(link_list, string_list):
 
 
 def print_obs_dates(year, obs_dates):
+    """
+    Prints the observing dates for a given year from a list of observing dates.
+
+    Parameters
+    ----------
+    year : str
+        The year for which observing dates will be printed.
+    obs_dates : list
+        A list of observing dates.
+
+    Returns
+    -------
+    None
+
+    Dependencies
+    ------------
+    None
+
+    Notes
+    -----
+    Function Name: print_obs_dates
+    This function takes a year and a list of observing dates as input.
+    It filters the observing dates that match the specified year and prints the first, last, and total number of dates.
+    The observing dates are formatted as '20??-??-??' and printed with an enumerated list.
+
+    Examples
+    --------
+    >>> dates = ['2022-01-01/', '2022-01-02/', '2022-01-03/']
+    >>> print_obs_dates('2022', dates)
+    first: 2022-01-01, last: 2022-01-03, total: 3
+    01: 01
+    02: 02
+    03: 03
+    (The `print_obs_dates` function is called with the provided year and observing dates.
+    The observing dates for the year '2022' are printed with their corresponding numbers.)
+    """
+
     # define a function to print all the observing dates for a given year in the obs_dates list
     obs_dates_year = [s for s in obs_dates if s.startswith(year)]
     print(
@@ -628,6 +960,40 @@ def print_obs_dates(year, obs_dates):
 
 
 def find_obs_dates(partial_string, obs_dates):
+    """
+    Finds observing dates that match a partial string from a list of observing dates.
+
+    Parameters
+    ----------
+    partial_string : str
+        The partial string to match against the observing dates.
+    obs_dates : list
+        A list of observing dates.
+
+    Returns
+    -------
+    None
+
+    Dependencies
+    ------------
+    None
+
+    Notes
+    -----
+    Function Name: find_obs_dates
+    This function takes a partial string and a list of observing dates as input.
+    It filters the observing dates that contain the specified partial string and prints the matching dates.
+    The observing dates are formatted as '20??-??-??' and printed with an enumerated list.
+    If no matching dates are found, it prints a message indicating no observation dates were found.
+
+    Examples
+    --------
+    >>> dates = ['2022-01-01/', '2022-01-02/', '2022-01-03/']
+    >>> find_obs_dates('02', dates)
+    01: 02
+    (The `find_obs_dates` function is called with the provided partial string '02' and observing dates.
+    The observing date '02' is printed as the matching date.)
+    """
     # define a function that takes a partial string and returns all the strings that match it from the obs_dates list
     obs_dates_partial = [s for s in obs_dates if partial_string in s]
     # remove the trailing slash and the year in the front, and return the list in the form 20??-??-??
