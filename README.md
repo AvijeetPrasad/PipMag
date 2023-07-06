@@ -2,6 +2,12 @@
 
 Development of pipeline for magnetic field reconstruction based on spectro-polarimetric observations of the solar atmosphere.
 
+## Online version
+
+Run the following [notebook](https://github.com/AvijeetPrasad/PipMag/blob/main/notebooks/quicklook.ipynb) [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github.com/AvijeetPrasad/PipMag/blob/main/notebooks/quicklook.ipynb)
+
+
+
 ## Setting up conda environment
 
     mamba create --name pipmag
