@@ -4,9 +4,33 @@ Development of pipeline for magnetic field reconstruction based on spectro-polar
 
 ## Setting up conda environment
 
-    mamba create --name pipmag 
+    mamba create --name pipmag
     mamba activate pipmag
     mamba install --file requirements.txt
+
+## Installation
+
+For development purposes, you may want to install the package in an editable mode. This will link the installed package directly to your source code so that any changes you make to the source code will be immediately reflected in the installed package.
+
+To install `pipmag` in editable mode:
+
+1. Navigate to the directory containing `setup.py`:
+
+    ```bash
+    cd /path/to/pipmag
+    ```
+
+2. Activate your conda environment:
+
+    ```bash
+    mamba activate pipmag
+    ```
+
+3. Install the package in editable mode:
+
+    ```bash
+    pip install -e .
+    ```
 
 ## Creating the SST observations database
 
