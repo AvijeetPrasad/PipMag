@@ -2,6 +2,7 @@ import requests
 import os
 import pandas as pd
 from IPython.display import display, HTML
+import configparser
 
 
 class ADSSearch:
@@ -77,9 +78,15 @@ class ADSSearch:
         """
 
         self.api_token = os.environ.get("ADS_DEV_KEY")
+
         if not self.api_token:
-            raise ValueError(
-                "ADS API key not found. Please set the ADS_DEV_KEY environmental variable.")
+            config = configparser.ConfigParser()
+            config.read('../config.ini')
+            self.api_token = config.get('DEFAULT', 'ADS_DEV_KEY', fallback=None)
+
+        if not self.api_token:
+            raise ValueError("ADS API key not found. Please set the ADS_DEV_KEY "
+                             "environmental variable or add it to the config.ini file.")
 
     def search(self, search_terms):
         """
