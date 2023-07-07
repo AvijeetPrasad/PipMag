@@ -333,6 +333,8 @@ class VideoSelector2:
         # Create a button widget to display the selected link
         self.display_button = widgets.Button(description='Show')
         self.display_button.on_click(display_selected_link)
+        # Create button to update values
+        self.update_button = widgets.Button(description='Update')
 
         # Register the function to be called when the links dropdown value changes
         self.links_dropdown.observe(links_value_changed, names='value')
@@ -347,6 +349,11 @@ class VideoSelector2:
         display(self.display_button)
 
         display(self.output)
+        # Assign the function to be triggered when update_button is clicked
+        self.update_button.on_click(update_values)
+
+        # Display the button
+        display(self.update_button)
 
         # Details at the bottom of the video
         for column_name in self.column_names:
