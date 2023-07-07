@@ -1,7 +1,7 @@
 import pandas as pd
 from IPython.display import display, clear_output, Video
 import ipywidgets as widgets
-from ads_utils import ADS_Search
+from pipmag.ads_utils import ADS_Search
 
 class MovieSelector:
     '''Class to create a widget to select a movie from a list of movies'''
