@@ -1,7 +1,7 @@
 # import libraries related to querying links and downloading files from the web
 from datetime import timedelta
+import os
 import pandas as pd
-from pipmag import file_utils as fu
 from pipmag import la_palma_utils as lp
 import re
 
@@ -18,7 +18,8 @@ print(f'first entry: {obs_dates_list[0]}\n'
       f'total observing dates: {len(obs_dates_list)}')
 
 # get the latest file from the list of files in the data directory
-latest_all_media_links_file = fu.get_latest_file('../data/all_media_links*')
+media_links_file = '../data/all_media_links.csv'
+latest_all_media_links_file = media_links_file if os.path.isfile(media_links_file) else None
 
 # check if all_media_links.pkl exists then load the pickle file, otherwise get the links
 if latest_all_media_links_file is None:
@@ -33,12 +34,18 @@ if latest_all_media_links_file is None:
     all_media_links = sorted(all_media_links)  # sort the list of links
     # print the total number of media links
     print(f'total number of media links: {len(all_media_links)}')
-    # save all the media links as a pickle file
-    fu.save_pickle(all_media_links, '../data/' + lp.add_timestamp('all_media_links.pkl'))
+    # convert the all_media_links list to dataframe
+    links_df = pd.DataFrame(all_media_links, columns=['Links'])
+    # save dataframe to csv file
+    links_df.to_csv('../data/all_media_links.csv', index=False)
+    print('All media links have been saved as a CSV file.')
 else:
-    # load the latest pickle file
-    all_media_links = fu.load_pickle(latest_all_media_links_file)
+    # load the media links csv file
+    links_df = pd.read_csv('../data/all_media_links.csv')
+    # convert dataframe to list
+    all_media_links = links_df['Links'].tolist()
     print(f'total number of media links: {len(all_media_links)}')
+
 
 # get the date and time from the links and find the links that do not have date and time and save them as a list
 date_time_from_all_media_links, date_time_not_found = lp.get_date_time_from_link_list(all_media_links)
@@ -143,7 +150,12 @@ grouped_df = sorted_df.groupby((sorted_df['date_time'].diff() > threshold).cumsu
 # convert the 'date_time' column back
 grouped_df['date_time'] = grouped_df['date_time'].apply(lambda x: x.to_pydatetime())
 
+# Convert the lists in 'links', 'video_links', 'image_links', 'instruments' columns to strings
+grouped_df['links'] = grouped_df['links'].apply(lambda x: ','.join(x))
+grouped_df['video_links'] = grouped_df['video_links'].apply(lambda x: ','.join(x))
+grouped_df['image_links'] = grouped_df['image_links'].apply(lambda x: ','.join(x))
+grouped_df['instruments'] = grouped_df['instruments'].apply(lambda x: ','.join(x))
 # print a summary of the dataframe
 grouped_df.info()
-# save the dataframe as a pickle file
-grouped_df.to_pickle('../data/' + fu.add_timestamp('la_palma_obs_data.pkl'))
+# Save the DataFrame to a CSV file
+grouped_df.to_csv('../data/la_palma_obs_data.csv')
