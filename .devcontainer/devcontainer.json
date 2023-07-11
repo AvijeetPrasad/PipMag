@@ -5,6 +5,7 @@
   },
   "waitFor": "onCreateCommand",
   "updateContentCommand": "python3 -m pip install -r requirements.txt",
+    "postCreateCommand": "python3 -m  pip install -e git+https://github.com/AvijeetPrasad/PipMag.git#egg=pipmag",
   "customizations": {
     "codespaces": {
       "openFiles": []
