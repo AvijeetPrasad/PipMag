@@ -1,20 +1,25 @@
 {
-  "image": "mcr.microsoft.com/devcontainers/universal:2",
-  "hostRequirements": {
-    "cpus": 4
-  },
-  "waitFor": "onCreateCommand",
-  "updateContentCommand": "python3 -m pip install -r requirements.txt",
-    "postCreateCommand": "python3 -m  pip install -e git+https://github.com/AvijeetPrasad/PipMag.git#egg=pipmag",
-  "customizations": {
-    "codespaces": {
-      "openFiles": []
+    "image": "mcr.microsoft.com/devcontainers/universal:2",
+    "hostRequirements": {
+      "cpus": 4
     },
-    "vscode": {
-      "extensions": [
-        "ms-toolsai.jupyter",
-        "ms-python.python"
-      ]
+    "waitFor": "onCreateCommand",
+    "updateContentCommand": "python3 -m pip install -r requirements.txt",
+    "postCreateCommand": [
+      "apt-get update",
+      "apt-get install -y ffmpeg",
+      "python3 -m  pip install -e git+https://github.com/AvijeetPrasad/PipMag.git#egg=pipmag"
+    ],
+    "customizations": {
+      "codespaces": {
+        "openFiles": []
+      },
+      "vscode": {
+        "extensions": [
+          "ms-toolsai.jupyter",
+          "ms-python.python"
+        ]
+      }
     }
   }
-}
+  
