@@ -18,7 +18,7 @@ print(f'first entry: {obs_dates_list[0]}\n'
       f'total observing dates: {len(obs_dates_list)}')
 
 # get the latest file from the list of files in the data directory
-media_links_file = '../data/all_media_links.csv'
+media_links_file = 'data/all_media_links.csv'
 latest_all_media_links_file = media_links_file if os.path.isfile(media_links_file) else None
 
 # check if all_media_links.pkl exists then load the pickle file, otherwise get the links
@@ -37,15 +37,14 @@ if latest_all_media_links_file is None:
     # convert the all_media_links list to dataframe
     links_df = pd.DataFrame(all_media_links, columns=['Links'])
     # save dataframe to csv file
-    links_df.to_csv('../data/all_media_links.csv', index=False)
+    links_df.to_csv('data/all_media_links.csv', index=False)
     print('All media links have been saved as a CSV file.')
 else:
     # load the media links csv file
-    links_df = pd.read_csv('../data/all_media_links.csv')
+    links_df = pd.read_csv('data/all_media_links.csv')
     # convert dataframe to list
     all_media_links = links_df['Links'].tolist()
     print(f'total number of media links: {len(all_media_links)}')
-
 
 # get the date and time from the links and find the links that do not have date and time and save them as a list
 date_time_from_all_media_links, date_time_not_found = lp.get_date_time_from_link_list(all_media_links)
@@ -158,4 +157,8 @@ grouped_df['instruments'] = grouped_df['instruments'].apply(lambda x: ','.join(x
 # print a summary of the dataframe
 grouped_df.info()
 # Save the DataFrame to a CSV file
-grouped_df.to_csv('../data/la_palma_obs_data.csv')
+grouped_df.to_csv('data/la_palma_obs_data.csv')
+
+# --- note ---
+# To run this file, go to the top-level PipMag directory and run the command:
+# python -m pipmag.gen_la_palma_obs_df
