@@ -2,6 +2,7 @@ import pandas as pd
 from IPython.display import display, clear_output, Video
 import ipywidgets as widgets
 from pipmag.ads_utils import ADS_Search
+import os
 
 class MovieSelector:
     '''Class to create a widget to select a movie from a list of movies'''
@@ -273,14 +274,24 @@ class VideoSelector2:
             time = change.new
             links = list(self.df[self.df['time'] == time]
                          ['video_links'].values[0])
-            self.links_dropdown.options = links
+            # Create a list of the link names (without the full path)
+            options = [os.path.basename(link) for link in links]
+            # Store the full path of the links in a variable
+            self.links_full_name = links
+            self.links_dropdown.options = options
+
 
         # Function to update the selected link when the links dropdown value changes
         def links_value_changed(change):
-            self.selected_link = change.new
+            # Get the index of the selected link
+            index = self.links_dropdown.options.index(change.new)
+            # Get the full path of the selected link
+            self.selected_link = self.links_full_name[index]
+            
             self.matches = self.df[self.df['video_links'].apply(
                 lambda x: self.selected_link in x)]
             self.selected_index = self.matches.index[0]
+            
 
         # Function to display the selected link when the display button is pressed
         def display_selected_link(b):
