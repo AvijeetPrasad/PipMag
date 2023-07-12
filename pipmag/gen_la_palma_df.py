@@ -144,7 +144,7 @@ def main():
         grouped_df[col] = grouped_df[col].apply(lambda x: ';'.join(x))
 
     # Save DataFrame to CSV file
-    grouped_df.to_csv(LA_PALMA_OBS_DATA_FILE)
+    grouped_df.to_csv(LA_PALMA_OBS_DATA_FILE, index=False)
     print('Dataframe saved to {}'.format(LA_PALMA_OBS_DATA_FILE))
 
 
