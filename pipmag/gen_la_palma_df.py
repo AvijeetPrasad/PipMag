@@ -83,7 +83,7 @@ def generate_dataframe(date_time_from_all_media_links, all_media_links_with_date
     df['time'] = df['date_time'].dt.time
     df['target'] = None
     df['comments'] = None
-    df['polarimetry'] = None
+    df['polarimetry'] = False
 
     # Extract instrument info from links
     df['instruments'] = df['links'].apply(lambda x: lp.get_instrument_info(x, INSTRUMENT_KEYWORDS))
@@ -121,8 +121,11 @@ def fix_duplicate_times(df):
         'image_links': 'sum',
         'links': 'sum',
         'num_links': 'sum',
-        'polarimetry': 'min'
+        'polarimetry': lambda x: 'True' if any(x) else False
     })
+
+    # Fix duplicates in 'instruments' column
+    grouped_df['instruments'] = grouped_df['instruments'].apply(lambda x: list(set(x)))
 
     # Convert 'date_time' column back to native Python datetime
     grouped_df['date_time'] = grouped_df['date_time'].apply(lambda x: x.to_pydatetime())
