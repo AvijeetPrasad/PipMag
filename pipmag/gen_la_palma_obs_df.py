@@ -1,8 +1,10 @@
 # import libraries related to querying links and downloading files from the web
 from datetime import timedelta
 import pandas as pd
-from pipmag import file_utils as fu
-from pipmag import la_palma_utils as lp
+# from pipmag import file_utils as fu
+import file_utils as fu
+# from pipmag import la_palma_utils as lp
+import la_palma_utils as lp
 import re
 
 # Print the years for which the La Palma Observatory has data at UiO
@@ -146,4 +148,25 @@ grouped_df['date_time'] = grouped_df['date_time'].apply(lambda x: x.to_pydatetim
 # print a summary of the dataframe
 grouped_df.info()
 # save the dataframe as a pickle file
-grouped_df.to_pickle('../data/' + fu.add_timestamp('la_palma_obs_data.pkl'))
+# grouped_df.to_pickle('../data/' + fu.add_timestamp('la_palma_obs_data.pkl'))
+
+## Add the new pickle to the old pickle file ## 
+
+# Get the latest file 
+latest_updated_la_palma_obs_data_file = fu.get_latest_file('../data/la_palma_obs_data_*.pkl')
+existing_data = fu.load_pickle(latest_updated_la_palma_obs_data_file)
+
+# Load the latest pickle file as a dataframe
+existing_df = pd.DataFrame(existing_data)
+
+# Create a copy of the existing dataframe 
+updated_df = existing_data.copy()
+
+# Read the new dataframe 
+new_data_df = grouped_df
+
+df3 = pd.concat([updated_df, new_data_df])
+df3.drop_duplicates(subset=['date_time'], inplace=True, keep='first')
+
+df3.info()
+fu.save_pickle(df3, '../data/'+ fu.add_timestamp('la_palma_obs_data.pkl'))
