@@ -150,10 +150,10 @@ grouped_df = sorted_df.groupby((sorted_df['date_time'].diff() > threshold).cumsu
 grouped_df['date_time'] = grouped_df['date_time'].apply(lambda x: x.to_pydatetime())
 
 # Convert the lists in 'links', 'video_links', 'image_links', 'instruments' columns to strings
-grouped_df['links'] = grouped_df['links'].apply(lambda x: ','.join(x))
-grouped_df['video_links'] = grouped_df['video_links'].apply(lambda x: ','.join(x))
-grouped_df['image_links'] = grouped_df['image_links'].apply(lambda x: ','.join(x))
-grouped_df['instruments'] = grouped_df['instruments'].apply(lambda x: ','.join(x))
+grouped_df['links'] = grouped_df['links'].apply(lambda x: ';'.join(x))
+grouped_df['video_links'] = grouped_df['video_links'].apply(lambda x: ';'.join(x))
+grouped_df['image_links'] = grouped_df['image_links'].apply(lambda x: ';'.join(x))
+grouped_df['instruments'] = grouped_df['instruments'].apply(lambda x: ';'.join(x))
 # print a summary of the dataframe
 grouped_df.info()
 # Save the DataFrame to a CSV file
