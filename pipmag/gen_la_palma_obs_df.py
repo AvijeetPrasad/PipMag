@@ -5,6 +5,10 @@ import pandas as pd
 from pipmag import la_palma_utils as lp
 import re
 
+# set the paths to the data files
+media_links_file = 'data/all_media_links.csv'
+la_palma_obs_data_file = 'data/la_palma_obs_data.csv'
+
 # Print the years for which the La Palma Observatory has data at UiO
 obs_years = lp.get_obs_years()
 
@@ -18,7 +22,6 @@ print(f'first entry: {obs_dates_list[0]}\n'
       f'total observing dates: {len(obs_dates_list)}')
 
 # get the latest file from the list of files in the data directory
-media_links_file = 'data/all_media_links.csv'
 latest_all_media_links_file = media_links_file if os.path.isfile(media_links_file) else None
 
 # check if all_media_links.pkl exists then load the pickle file, otherwise get the links
@@ -37,11 +40,11 @@ if latest_all_media_links_file is None:
     # convert the all_media_links list to dataframe
     links_df = pd.DataFrame(all_media_links, columns=['Links'])
     # save dataframe to csv file
-    links_df.to_csv('data/all_media_links.csv', index=False)
+    links_df.to_csv(media_links_file, index=False)
     print('All media links have been saved as a CSV file.')
 else:
     # load the media links csv file
-    links_df = pd.read_csv('data/all_media_links.csv')
+    links_df = pd.read_csv(media_links_file)
     # convert dataframe to list
     all_media_links = links_df['Links'].tolist()
     print(f'total number of media links: {len(all_media_links)}')
@@ -149,15 +152,17 @@ grouped_df = sorted_df.groupby((sorted_df['date_time'].diff() > threshold).cumsu
 # convert the 'date_time' column back
 grouped_df['date_time'] = grouped_df['date_time'].apply(lambda x: x.to_pydatetime())
 
-# Convert the lists in 'links', 'video_links', 'image_links', 'instruments' columns to strings
-grouped_df['links'] = grouped_df['links'].apply(lambda x: ';'.join(x))
-grouped_df['video_links'] = grouped_df['video_links'].apply(lambda x: ';'.join(x))
-grouped_df['image_links'] = grouped_df['image_links'].apply(lambda x: ';'.join(x))
-grouped_df['instruments'] = grouped_df['instruments'].apply(lambda x: ';'.join(x))
+# List of columns to convert from lists to strings
+columns_to_convert = ['links', 'video_links', 'image_links', 'instruments']
+
+# Convert the lists in each column to strings
+for col in columns_to_convert:
+    grouped_df[col] = grouped_df[col].apply(lambda x: ';'.join(x))
+
 # print a summary of the dataframe
 grouped_df.info()
 # Save the DataFrame to a CSV file
-grouped_df.to_csv('data/la_palma_obs_data.csv')
+grouped_df.to_csv(la_palma_obs_data_file)
 
 # --- note ---
 # To run this file, go to the top-level PipMag directory and run the command:
