@@ -1,110 +1,121 @@
 # PipMag
 
-Development of pipeline for magnetic field reconstruction based on spectro-polarimetric observations of the solar atmosphere.
-
-## Setting up conda environment
-
-    mamba create --name pipmag
-    mamba activate pipmag
-    mamba install --file requirements.txt
+PipMag is a Python package designed for browsing and querying solar observations data gathered by the Swedish Solar Telescope (SST). 
 
 ## Installation
 
-For development purposes, you may want to install the package in an editable mode. This will link the installed package directly to your source code so that any changes you make to the source code will be immediately reflected in the installed package.
+### Preparing the Environment
 
-To install `pipmag` in editable mode:
+The package relies on a set of dependencies listed in the `requirements.txt` file. To ensure a clean and conflict-free setup, it's recommended to create a new environment using either conda or mamba.
 
-1. Navigate to the directory containing `setup.py`:
+For macOS and Linux users, you can create and activate the environment as follows:
 
-    ```bash
-    cd /path/to/pipmag
-    ```
+```bash
+mamba create --name pipmag
+mamba activate pipmag
+mamba install --file requirements.txt
+```
 
-2. Activate your conda environment:
+### Installing PipMag
 
-    ```bash
-    mamba activate pipmag
-    ```
+Once the environment is ready, navigate to the directory containing `setup.py` file, activate your environment, and install the package in an editable mode. This mode links the installed package directly to your source code, allowing any changes you make in the source code to be immediately reflected in the installed package.
 
-3. Install the package in editable mode:
+```bash
+cd /path/to/pipmag
+mamba activate pipmag
+pip install -e .
+```
 
-    ```bash
-    pip install -e .
-    ```
+## Creating the SST Observations Database
 
-## Creating the SST observations database
+The package includes a python file (`pipmag/gen_la_palma_df.py`) that creats the SST observations database.
 
-- Open the file `quicklook.ipynb`
-- Go to the section marked `Start here: Loading the existing dataframe`
-- Load the latest pickle file and run the block containing the widget.
-- Enter a `Year, Month, Day, Time` combination and click on Show to see the quicklook movie options.
-- Any predefined info will be loaded in the boxes which can now be updated.
+To view the quicklook movies:
+- Open `notebooks/la_palma_quicklook.ipynb`
+- Load the `data/la_palma_obs_data.csv` file and run the block containing the IPython widget.
+- Provide a `Year, Month, Day, Time` combination and click on "Show" to see the quicklook movie options.
+- Any predefined information will be loaded into the boxes and can be updated as needed.
 
-## Setting up the `config.ini` file
+## Setting up the `config.ini` File
 
-- Open the file `config.ini.example` file and save it as `config.ini`
-- Add the `ADS_DEV_KEY` to the `config.ini` file. To obtain the `ADS_DEV_KEY` follow the instructions [here](https://ui.adsabs.harvard.edu/help/api/)
+To setup the configuration:
 
-Sure, here's a draft section for your README to instruct users on how to use Git Large File Storage (LFS) to track changes in CSV files:
+- Open the `config.ini.example` file and save it as `config.ini`
+- To run ADS searches within the notebooks, add your `ADS_DEV_KEY` to the `config.ini` file. To obtain this key, follow the instructions provided [here](https://ui.adsabs.harvard.edu/help/api/).
 
-## Using Git Large File Storage (LFS) for CSV files
+## Using Git Large
 
-If you're contributing large CSV files to this project, we recommend using Git Large File Storage (LFS), an open-source Git extension for versioning large files. Git LFS replaces large files such as CSV files with text pointers inside Git, while storing the file contents on a remote server. This results in reduced repository size and faster clone and fetch operations.
+File Storage (LFS) for CSV Files
 
-Follow the steps below to install Git LFS and start tracking CSV files:
+If you're planning to contribute large CSV files to this project, we recommend using Git Large File Storage (LFS), an open-source Git extension for versioning large files. Git LFS replaces large files such as CSVs with text pointers inside Git, while storing the file contents on a remote server. This results in a smaller repository size and faster operations.
 
-1. **Install Git LFS:** If you haven't installed Git LFS yet, you can do so using Homebrew if you're on a macOS:
+### Installing and Setting Up Git LFS
 
-    ```bash
-    brew install git-lfs
-    ```
+For macOS users, you can install Git LFS using Homebrew:
 
-   For other operating systems, please follow the [official Git LFS installation instructions](https://git-lfs.github.com/).
+```bash
+brew install git-lfs
+```
 
-2. **Set up Git LFS:** After installing Git LFS, you need to set it up once per repository on your machine. Navigate to the root directory of your local clone of the Git repository and run:
+For Linux users, refer to the [official Git LFS installation instructions](https://git-lfs.github.com/).
 
-    ```bash
-    git lfs install
-    ```
+After the installation, setup Git LFS for your repository:
 
-3. **Track CSV files:** To start tracking CSV files with Git LFS, run:
+```bash
+git lfs install
+```
 
-    ```bash
-    git lfs track "*.csv"
-    ```
+### Tracking CSV Files
 
-   This command tells Git LFS to track all CSV files. You can adjust the "*.csv" pattern to match the specific files you want to track.
+To start tracking CSV files with Git LFS:
 
-4. **Commit and push changes:** Now, you can commit and push your changes as usual:
+```bash
+git lfs track "*.csv"
+```
 
-    ```bash
-    git add .
-    git commit -m "Add large file"
-    git push
-    ```
+This command tells Git LFS to track all CSV files. Adjust the "*.csv" pattern to match the specific files you want to track.
 
-   Git LFS is now set up and will automatically intercept the CSV files you specified and store them efficiently.
+### Committing and Pushing Changes
 
-Please note that each user who wants to interact with the large files will need to have Git LFS installed on their machine. Otherwise, they'll only see the text pointers in their local repository.
+You can now commit and push your changes as usual:
 
-For more information about Git LFS, please refer to the [official Git LFS documentation](https://github.com/git-lfs/git-lfs/wiki).
----
+```bash
+git add .
+git commit -m "Add large file"
+git push
+```
 
-Remember to replace the repository path and file types according to your project's specifics.
+Remember, users who interact with the large files will need Git LFS installed on their machines. Otherwise, they'll only see the text pointers in their local repository.
 
-## Commit messages
+## Commit Message Guidelines
 
-Use following tags for commit messages:
+Use the following tags for commit messages:
 
-       [DEV] : Code development (including additions and deletions)
-       [ADD] : Adding new feature
-       [DEL] : Removing files, routines
-       [FIX] : Fixes that occur during development, but which have essentially no impact on previous work
-       [BUG] : Bug with significant impact on previous work -- `grep`-ing should give restricted list
-       [OPT] : Optimisation
-       [DBG] : Debugging
-       [ORG] : Organisational, no changes to functionality
-       [SYN] : Typos and misspellings (including simple syntax error fixes)
-       [DOC] : Documentation only
-       [REP] : Repository related changes (e.g., changes in the ignore list, remove files)
-       [UTL] : Changes in utils
+- `[DEV]`: Code development (including additions and deletions)
+- `[ADD]`: Adding new features
+- `[DEL]`: Removing files, routines
+- `[FIX]`: Fixes that occur during development, but which have essentially no impact on previous work
+- `[BUG]`: Bug with significant impact on previous work
+- `[OPT]`: Optimization
+- `[DBG]`: Debugging
+- `[ORG]`: Organizational changes, no changes to functionality
+- `[SYN]`: Typos and misspellings (including simple syntax error fixes)
+- `[DOC]`: Documentation only
+- `[REP]`: Repository related changes (e.g., changes in the ignore list, remove files)
+- `[UTL]`: Changes in utilities
+
+## Repository Structure
+
+The repository structure is organized as follows:
+
+- `LICENSE`: Contains the license details for this project.
+- `README.md`: This file, containing details about the project and instructions for setting it up.
+- `config.ini.example`: An example configuration file to guide users in setting up their own `config.ini`.
+- `data`: This directory contains the dataset files.
+- `docs`: Contains the documentation files for the project.
+- `notebooks`: Contains Jupyter notebooks for analyzing and visualizing the data.
+- `pipmag`: The main package directory, containing all the Python scripts and modules for the project.
+- `requirements.txt`: Lists all Python dependencies required by PipMag.
+- `scripts`: Contains utility scripts for the project.
+- `setup.py`: Python script for packaging and distributing the project.
+- `tests`: Contains the test scripts for the PipMag package.
