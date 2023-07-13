@@ -121,7 +121,7 @@ def fix_duplicate_times(df):
         'image_links': 'sum',
         'links': 'sum',
         'num_links': 'sum',
-        'polarimetry': 'min'
+        'polarimetry': 'first'
     })
 
     # Convert 'date_time' column back to native Python datetime
@@ -129,21 +129,30 @@ def fix_duplicate_times(df):
 
     return grouped_df
 
-def add_new_data(new_df):
-    """
-    Add a potential new DataFrame to the old DataFrame file without losing any data.
-    """
-    # Load the existing CSV file as a dataframe
-    existing_data = pd.read_csv(LA_PALMA_OBS_DATA_FILE)
-    existing_df = pd.DataFrame(existing_data)
+# def add_dataframes(new_df):
+#     """
+#     Add a potential new DataFrame to the old DataFrame file without losing any data.
+#     """
+#     # Load the existing CSV file as a dataframe
+#     existing_df = pd.read_csv(LA_PALMA_OBS_DATA_FILE)
 
-    # Create a copy of the existing dataframe 
-    updated_df = existing_data.copy()
+#     # Read the date_time column as datetime
+#     existing_df['date_time'] = pd.to_datetime(existing_df['date_time'])
 
-    df3 = pd.concat([updated_df, new_df])
-    df3.drop_duplicates(subset=['date_time'], inplace=True, keep='first')
+#     # List of columns to convert from strings to lists
+#     columns_to_convert = ['links', 'video_links', 'image_links', 'instruments']
 
-    return df3 
+#     # Convert the strings in each column back to lists
+#     for col in columns_to_convert:
+#         existing_df[col] = existing_df[col].apply(lambda x: x.split(';') if isinstance(x, str) else [])
+    
+#     print(existing_df.head())
+
+#     # Concatenate the existing dataframe and the new dataframe
+#     df3 = pd.concat([existing_df, new_df])
+#     df3.drop_duplicates(subset=['date_time'], inplace=True, keep='first')
+
+#     return df3 
 
 def main():
     """
@@ -153,12 +162,15 @@ def main():
     date_time_from_all_media_links, all_media_links_with_date_time = preprocess_links(all_media_links)
     df = generate_dataframe(date_time_from_all_media_links, all_media_links_with_date_time)
     grouped_df = fix_duplicate_times(df)
-    grouped_df = add_new_data(grouped_df)
+    # grouped_df = add_dataframes(grouped_df) # 
+    # print(grouped_df.head())
 
     # List of columns to convert from lists to strings
     columns_to_convert = ['links', 'video_links', 'image_links', 'instruments']
     for col in columns_to_convert:
         grouped_df[col] = grouped_df[col].apply(lambda x: ';'.join(x))
+
+    print(grouped_df.head())
 
     # Save DataFrame to CSV file
     grouped_df.to_csv(LA_PALMA_OBS_DATA_FILE, index=False)
