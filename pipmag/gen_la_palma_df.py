@@ -121,7 +121,7 @@ def fix_duplicate_times(df):
         'image_links': 'sum',
         'links': 'sum',
         'num_links': 'sum',
-        'polarimetry': 'first'
+        'polarimetry': 'min'
     })
 
     # Convert 'date_time' column back to native Python datetime
@@ -154,6 +154,7 @@ def fix_duplicate_times(df):
 
 #     return df3 
 
+
 def main():
     """
     Main function to load or fetch links, preprocess links, generate DataFrame, and fix duplicate times.
@@ -165,12 +166,11 @@ def main():
     # grouped_df = add_dataframes(grouped_df) # 
     # print(grouped_df.head())
 
+
     # List of columns to convert from lists to strings
     columns_to_convert = ['links', 'video_links', 'image_links', 'instruments']
     for col in columns_to_convert:
         grouped_df[col] = grouped_df[col].apply(lambda x: ';'.join(x))
-
-    print(grouped_df.head())
 
     # Save DataFrame to CSV file
     grouped_df.to_csv(LA_PALMA_OBS_DATA_FILE, index=False)
