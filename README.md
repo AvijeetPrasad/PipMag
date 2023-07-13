@@ -28,7 +28,7 @@ pip install -e .
 
 ## Creating the SST Observations Database
 
-The package includes a python file (`pipmag/gen_la_palma_df.py`) that creats the SST observations database.
+The package includes a python file (`pipmag/gen_la_palma_df.py`) that creates the SST observations database.
 
 To view the quicklook movies:
 - Open `notebooks/la_palma_quicklook.ipynb`
@@ -58,7 +58,10 @@ brew install git-lfs
 ```
 
 For Linux users, refer to the [official Git LFS installation instructions](https://git-lfs.github.com/).
-
+One option is to use conda/mamba:
+```bash
+mamba install -c conda-forge git-lfs
+```
 After the installation, setup Git LFS for your repository:
 
 ```bash
