@@ -129,6 +129,22 @@ def fix_duplicate_times(df):
 
     return grouped_df
 
+def add_new_data(new_df):
+    """
+    Add a potential new DataFrame to the old DataFrame file without losing any data.
+    """
+    # Load the existing CSV file as a dataframe
+    existing_data = pd.read_csv(LA_PALMA_OBS_DATA_FILE)
+    existing_df = pd.DataFrame(existing_data)
+
+    # Create a copy of the existing dataframe 
+    updated_df = existing_data.copy()
+
+    df3 = pd.concat([updated_df, new_df])
+    df3.drop_duplicates(subset=['date_time'], inplace=True, keep='first')
+
+    return df3 
+
 def main():
     """
     Main function to load or fetch links, preprocess links, generate DataFrame, and fix duplicate times.
@@ -137,6 +153,7 @@ def main():
     date_time_from_all_media_links, all_media_links_with_date_time = preprocess_links(all_media_links)
     df = generate_dataframe(date_time_from_all_media_links, all_media_links_with_date_time)
     grouped_df = fix_duplicate_times(df)
+    grouped_df = add_new_data(grouped_df)
 
     # List of columns to convert from lists to strings
     columns_to_convert = ['links', 'video_links', 'image_links', 'instruments']
