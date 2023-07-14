@@ -6,14 +6,14 @@ In this wiki, you will find comprehensive documentation that guides you through 
 
 Here's an overview of what you can find in this wiki:
 
-- [Installation](docs/Installation): Detailed instructions on setting up PipMag in your local environment.
+- [Installation](docs/Installation.md): Detailed instructions on setting up PipMag in your local environment.
 - [Creating the SST Observations Database](docs/Creating-the-SST-Observations-Database.md): A guide to creating and interacting with the SST observations database.
-- [Setting up Configuration File](docs/Setting-up-configuration-file): Steps for setting up the `config.ini` file and obtaining the `ADS_DEV_KEY`.
-- [Working with Git Large File Storage (LFS)](docs/Working-with-Git-Large-File-Storage): A guide on how to use Git LFS when contributing large CSV files.
-- [Commit Message Guidelines](docs/Commit-Message-Guidelines): Best practices for writing meaningful commit messages.
-- [Repository Structure](docs/Repository-structure): An overview of the structure and content of the PipMag repository.
-- [Quicklook Movie Filename Convention](docs/Quicklook-Movie-FIlename-Convention): The convention used for naming quicklook movies.
-- [La Palma Data Frame Structure](docs/La-Palma-Data-Frame-Structure): An explanation of the data frame structure used to store observations data.
+- [Setting up Configuration File](docs/Setting-up-configuration-file.md): Steps for setting up the `config.ini` file and obtaining the `ADS_DEV_KEY`.
+- [Working with Git Large File Storage (LFS)](docs/Working-with-Git-Large-File-Storage.md): A guide on how to use Git LFS when contributing large CSV files.
+- [Commit Message Guidelines](docs/Commit-Message-Guidelines.md): Best practices for writing meaningful commit messages.
+- [Repository Structure](docs/Repository-structure.md): An overview of the structure and content of the PipMag repository.
+- [Quicklook Movie Filename Convention](docs/Quicklook-Movie-FIlename-Convention.md): The convention used for naming quicklook movies.
+- [La Palma Data Frame Structure](docs/La-Palma-Data-Frame-Structure.md): An explanation of the data frame structure used to store observations data.
 
 If you have any questions or suggestions, feel free to raise an issue on the project's GitHub page.
 
