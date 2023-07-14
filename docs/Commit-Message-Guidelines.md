@@ -27,6 +27,6 @@ git commit -m "[ADD] New feature for ..."
 
 By adhering to these guidelines, we can maintain a clear and useful commit history that will benefit all collaborators.
 
-In the next section, we will guide you on understanding the structure of the PipMag repository in the [Repository Structure](./Repository-structure).
+In the next section, we will guide you on understanding the structure of the PipMag repository in the [Repository Structure](./Repository-structure.md).
 
 If you have any questions or suggestions about these guidelines, feel free to raise an issue on the project's GitHub page. We are here to help!

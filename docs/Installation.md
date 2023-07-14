@@ -26,6 +26,6 @@ pip install -e .
 
 You've now successfully installed PipMag! The package is ready for you to use or contribute to.
 
-In the next section, we will guide you on [Creating the SST Observations Database](./Creating-the-SST-Observations-Database).
+In the next section, we will guide you on [Creating the SST Observations Database](./Creating-the-SST-Observations-Database.md).
 
 If you encounter any issues during the installation process, feel free to raise an issue on the project's GitHub page. We are here to help!

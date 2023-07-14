@@ -25,6 +25,6 @@ With these steps, you have successfully set up the `config.ini` file and configu
 
 Remember to keep your `config.ini` file safe and not to share it publicly, as it contains your personal `ADS_DEV_KEY`. Treat it like a password.
 
-In the next section, we will guide you on how to use Git Large File Storage (LFS) for handling large CSV files in the [Using Git Large File Storage (LFS) for CSV Files](./Working-with-Git-Large-File-Storage).
+In the next section, we will guide you on how to use Git Large File Storage (LFS) for handling large CSV files in the [Using Git Large File Storage (LFS) for CSV Files](./Working-with-Git-Large-File-Storage.md).
 
 If you encounter any issues during the configuration process, feel free to raise an issue on the project's GitHub page. We are here to help!

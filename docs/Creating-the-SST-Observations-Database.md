@@ -22,6 +22,6 @@ Now that you have created the SST observations database, you can view the quickl
 
 With these steps, you've successfully created the SST observations database and are ready to explore the quicklook movies of the observations!
 
-In the next section, we will guide you on how to [Set Up the Configuration File](./Setting-up-configuration-file).
+In the next section, we will guide you on how to [Set Up the Configuration File](./Setting-up-configuration-file.md).
 
 If you encounter any issues during the database creation process, feel free to raise an issue on the project's GitHub page. We are here to help!

@@ -56,6 +56,6 @@ Git LFS will automatically handle the large files you specified and store them e
 
 Remember, all users who interact with the large files will need to have Git LFS installed on their machines. Without Git LFS, users will only see the text pointers in their local repository instead of the actual file contents.
 
-In the next section, we will guide you on how to maintain good commit practices in the [Commit Message Guidelines](./Commit-Message-Guidelines).
+In the next section, we will guide you on how to maintain good commit practices in the [Commit Message Guidelines](./Commit-Message-Guidelines.md).
 
 If you encounter any issues while working with Git LFS, feel free to raise an issue on the project's GitHub page. We are here to help!
