@@ -121,13 +121,46 @@ def fix_duplicate_times(df):
         'image_links': 'sum',
         'links': 'sum',
         'num_links': 'sum',
-        'polarimetry': 'min'
+        'polarimetry': 'first'
     })
+
+    # Fix duplicates in 'instruments' column
+    grouped_df['instruments'] = grouped_df['instruments'].apply(lambda x: list(set(x)))
 
     # Convert 'date_time' column back to native Python datetime
     grouped_df['date_time'] = grouped_df['date_time'].apply(lambda x: x.to_pydatetime())
 
     return grouped_df
+
+def add_existing_and_new_dataframes(new_df):
+    """
+    Add a potential new DataFrame to the old DataFrame file without losing any data.
+    """
+    # Load the existing CSV file as a dataframe
+    existing_df = pd.read_csv(LA_PALMA_OBS_DATA_FILE)
+
+    # Read the date_time column as datetime
+    existing_df['date_time'] = pd.to_datetime(existing_df['date_time'])
+
+    # List of columns to convert from strings to lists
+    columns_to_convert = ['links', 'video_links', 'image_links', 'instruments']
+
+    # Convert the strings in each column back to lists
+    for col in columns_to_convert:
+        existing_df[col] = existing_df[col].apply(lambda x: x.split(';') if isinstance(x, str) else [])
+    
+    # List of columns to convert from NaN to None 
+    columns_to_convert = ['comments', 'polarimetry', 'target']
+
+    # Convert the NaNs in each column back to None
+    for col in columns_to_convert:
+        existing_df[col] = existing_df[col].apply(lambda x: None if pd.isna(x) else x)
+
+    # Concatenate the existing dataframe and the new dataframe
+    df3 = pd.concat([existing_df, new_df])
+    df3.drop_duplicates(subset=['date_time'], inplace=True, keep='first')
+
+    return df3 
 
 def main():
     """
@@ -137,6 +170,7 @@ def main():
     date_time_from_all_media_links, all_media_links_with_date_time = preprocess_links(all_media_links)
     df = generate_dataframe(date_time_from_all_media_links, all_media_links_with_date_time)
     grouped_df = fix_duplicate_times(df)
+    grouped_df = add_existing_and_new_dataframes(grouped_df) 
 
     # List of columns to convert from lists to strings
     columns_to_convert = ['links', 'video_links', 'image_links', 'instruments']
