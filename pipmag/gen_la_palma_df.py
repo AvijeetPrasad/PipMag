@@ -121,7 +121,6 @@ def fix_duplicate_times(df):
         'image_links': 'sum',
         'links': 'sum',
         'num_links': 'sum',
-        'polarimetry': 'first',
         'polarimetry': lambda x: 'True' if any(x) else 'False'
     })
 
