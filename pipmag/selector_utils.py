@@ -280,18 +280,16 @@ class VideoSelector2:
             self.links_full_name = links
             self.links_dropdown.options = options
 
-
         # Function to update the selected link when the links dropdown value changes
         def links_value_changed(change):
             # Get the index of the selected link
             index = self.links_dropdown.options.index(change.new)
             # Get the full path of the selected link
             self.selected_link = self.links_full_name[index]
-            
+
             self.matches = self.df[self.df['video_links'].apply(
                 lambda x: self.selected_link in x)]
             self.selected_index = self.matches.index[0]
-            
 
         # Function to display the selected link when the display button is pressed
         def display_selected_link(b):
