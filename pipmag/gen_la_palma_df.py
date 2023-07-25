@@ -47,6 +47,7 @@ def load_or_fetch_links():
 
     return all_media_links
 
+
 def preprocess_links(all_media_links):
     """
     Preprocess media links to extract date and time, and filter out invalid dates.
@@ -62,6 +63,7 @@ def preprocess_links(all_media_links):
     date_time_from_all_media_links = [date for date in date_time_from_all_media_links if date not in invalid_dates]
 
     return date_time_from_all_media_links, all_media_links_with_date_time
+
 
 def generate_dataframe(date_time_from_all_media_links, all_media_links_with_date_time):
     """
@@ -100,6 +102,7 @@ def generate_dataframe(date_time_from_all_media_links, all_media_links_with_date
              'video_links', 'image_links', 'links', 'num_links', 'polarimetry']]
 
     return df
+
 
 def fix_duplicate_times(df):
     """

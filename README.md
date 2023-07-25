@@ -1,110 +1,20 @@
-# PipMag
+PipMag is a Python package developed to provide a streamlined and intuitive interface for browsing and querying solar observations data collected by the Swedish Solar Telescope (SST).
 
-Development of pipeline for magnetic field reconstruction based on spectro-polarimetric observations of the solar atmosphere.
+This project aims to assist users by offering a powerful tool to navigate through a vast amount of solar data by simplifying the process of data retrieval and organization.
 
-## Setting up conda environment
+In this wiki, you will find comprehensive documentation that guides you through the installation and usage of PipMag, explains the data structure it uses, outlines the conventions for naming quicklook movies, and much more. Each page in the wiki is designed to help you understand different aspects of the project, whether you're a user seeking to extract valuable insights from SST data or a contributor looking to add new features to the package.
 
-    mamba create --name pipmag
-    mamba activate pipmag
-    mamba install --file requirements.txt
+Here's an overview of what you can find in this wiki:
 
-## Installation
+- [Installation](docs/Installation.md): Detailed instructions on setting up PipMag in your local environment.
+- [Creating the SST Observations Database](docs/Creating-the-SST-Observations-Database.md): A guide to creating and interacting with the SST observations database.
+- [Setting up Configuration File](docs/Setting-up-configuration-file.md): Steps for setting up the `config.ini` file and obtaining the `ADS_DEV_KEY`.
+- [Working with Git Large File Storage (LFS)](docs/Working-with-Git-Large-File-Storage.md): A guide on how to use Git LFS when contributing large CSV files.
+- [Commit Message Guidelines](docs/Commit-Message-Guidelines.md): Best practices for writing meaningful commit messages.
+- [Repository Structure](docs/Repository-structure.md): An overview of the structure and content of the PipMag repository.
+- [Quicklook Movie Filename Convention](docs/Quicklook-Movie-FIlename-Convention.md): The convention used for naming quicklook movies.
+- [La Palma Data Frame Structure](docs/La-Palma-Data-Frame-Structure.md): An explanation of the data frame structure used to store observations data.
 
-For development purposes, you may want to install the package in an editable mode. This will link the installed package directly to your source code so that any changes you make to the source code will be immediately reflected in the installed package.
+If you have any questions or suggestions, feel free to raise an issue on the project's GitHub page.
 
-To install `pipmag` in editable mode:
-
-1. Navigate to the directory containing `setup.py`:
-
-    ```bash
-    cd /path/to/pipmag
-    ```
-
-2. Activate your conda environment:
-
-    ```bash
-    mamba activate pipmag
-    ```
-
-3. Install the package in editable mode:
-
-    ```bash
-    pip install -e .
-    ```
-
-## Creating the SST observations database
-
-- Open the file `quicklook.ipynb`
-- Go to the section marked `Start here: Loading the existing dataframe`
-- Load the latest pickle file and run the block containing the widget.
-- Enter a `Year, Month, Day, Time` combination and click on Show to see the quicklook movie options.
-- Any predefined info will be loaded in the boxes which can now be updated.
-
-## Setting up the `config.ini` file
-
-- Open the file `config.ini.example` file and save it as `config.ini`
-- Add the `ADS_DEV_KEY` to the `config.ini` file. To obtain the `ADS_DEV_KEY` follow the instructions [here](https://ui.adsabs.harvard.edu/help/api/)
-
-Sure, here's a draft section for your README to instruct users on how to use Git Large File Storage (LFS) to track changes in CSV files:
-
-## Using Git Large File Storage (LFS) for CSV files
-
-If you're contributing large CSV files to this project, we recommend using Git Large File Storage (LFS), an open-source Git extension for versioning large files. Git LFS replaces large files such as CSV files with text pointers inside Git, while storing the file contents on a remote server. This results in reduced repository size and faster clone and fetch operations.
-
-Follow the steps below to install Git LFS and start tracking CSV files:
-
-1. **Install Git LFS:** If you haven't installed Git LFS yet, you can do so using Homebrew if you're on a macOS:
-
-    ```bash
-    brew install git-lfs
-    ```
-
-   For other operating systems, please follow the [official Git LFS installation instructions](https://git-lfs.github.com/).
-
-2. **Set up Git LFS:** After installing Git LFS, you need to set it up once per repository on your machine. Navigate to the root directory of your local clone of the Git repository and run:
-
-    ```bash
-    git lfs install
-    ```
-
-3. **Track CSV files:** To start tracking CSV files with Git LFS, run:
-
-    ```bash
-    git lfs track "*.csv"
-    ```
-
-   This command tells Git LFS to track all CSV files. You can adjust the "*.csv" pattern to match the specific files you want to track.
-
-4. **Commit and push changes:** Now, you can commit and push your changes as usual:
-
-    ```bash
-    git add .
-    git commit -m "Add large file"
-    git push
-    ```
-
-   Git LFS is now set up and will automatically intercept the CSV files you specified and store them efficiently.
-
-Please note that each user who wants to interact with the large files will need to have Git LFS installed on their machine. Otherwise, they'll only see the text pointers in their local repository.
-
-For more information about Git LFS, please refer to the [official Git LFS documentation](https://github.com/git-lfs/git-lfs/wiki).
 ---
-
-Remember to replace the repository path and file types according to your project's specifics.
-
-## Commit messages
-
-Use following tags for commit messages:
-
-       [DEV] : Code development (including additions and deletions)
-       [ADD] : Adding new feature
-       [DEL] : Removing files, routines
-       [FIX] : Fixes that occur during development, but which have essentially no impact on previous work
-       [BUG] : Bug with significant impact on previous work -- `grep`-ing should give restricted list
-       [OPT] : Optimisation
-       [DBG] : Debugging
-       [ORG] : Organisational, no changes to functionality
-       [SYN] : Typos and misspellings (including simple syntax error fixes)
-       [DOC] : Documentation only
-       [REP] : Repository related changes (e.g., changes in the ignore list, remove files)
-       [UTL] : Changes in utils
