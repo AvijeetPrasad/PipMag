@@ -2,6 +2,7 @@ import os
 import pandas as pd
 from datetime import timedelta
 from pipmag import la_palma_utils as lp
+import numpy as np 
 
 # Constants
 MEDIA_LINKS_FILE = 'data/all_media_links.csv'
@@ -11,6 +12,9 @@ INSTRUMENT_KEYWORDS = {
     'CRISP': ['wb_6563', 'ha', 'Crisp', '6173', '8542', '6563', 'crisp'],
     'CHROMIS': ['Chromis', 'cak', '4846'],
     'IRIS': ['sji']
+}
+POLARIMETRY_KEYWORDS = {
+    'True': ['Bz+Bh', 'blos', 'Blos']
 }
 
 def load_or_fetch_links():
@@ -43,6 +47,7 @@ def load_or_fetch_links():
 
     return all_media_links
 
+
 def preprocess_links(all_media_links):
     """
     Preprocess media links to extract date and time, and filter out invalid dates.
@@ -58,6 +63,7 @@ def preprocess_links(all_media_links):
     date_time_from_all_media_links = [date for date in date_time_from_all_media_links if date not in invalid_dates]
 
     return date_time_from_all_media_links, all_media_links_with_date_time
+
 
 def generate_dataframe(date_time_from_all_media_links, all_media_links_with_date_time):
     """
@@ -83,10 +89,11 @@ def generate_dataframe(date_time_from_all_media_links, all_media_links_with_date
     df['time'] = df['date_time'].dt.time
     df['target'] = None
     df['comments'] = None
-    df['polarimetry'] = None
+    df['polarimetry'] = 'False'
 
     # Extract instrument info from links
     df['instruments'] = df['links'].apply(lambda x: lp.get_instrument_info(x, INSTRUMENT_KEYWORDS))
+    df['polarimetry'] = df['links'].apply(lambda x: lp.get_instrument_info(x, POLARIMETRY_KEYWORDS))
     df['video_links'] = df['links'].apply(lambda x: lp.get_links_with_string(x, ['mp4', 'mov']))
     df['image_links'] = df['links'].apply(lambda x: lp.get_links_with_string(x, ['jpg', 'png']))
 
@@ -95,6 +102,7 @@ def generate_dataframe(date_time_from_all_media_links, all_media_links_with_date
              'video_links', 'image_links', 'links', 'num_links', 'polarimetry']]
 
     return df
+
 
 def fix_duplicate_times(df):
     """
@@ -121,7 +129,7 @@ def fix_duplicate_times(df):
         'image_links': 'sum',
         'links': 'sum',
         'num_links': 'sum',
-        'polarimetry': 'first'
+        'polarimetry': lambda x: 'True' if any(x) else 'False'
     })
 
     # Fix duplicates in 'instruments' column
@@ -170,7 +178,7 @@ def main():
     date_time_from_all_media_links, all_media_links_with_date_time = preprocess_links(all_media_links)
     df = generate_dataframe(date_time_from_all_media_links, all_media_links_with_date_time)
     grouped_df = fix_duplicate_times(df)
-    grouped_df = add_existing_and_new_dataframes(grouped_df) 
+    grouped_df = add_existing_and_new_dataframes(grouped_df)
 
     # List of columns to convert from lists to strings
     columns_to_convert = ['links', 'video_links', 'image_links', 'instruments']
