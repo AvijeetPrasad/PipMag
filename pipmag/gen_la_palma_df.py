@@ -13,6 +13,7 @@ INSTRUMENT_KEYWORDS = {
     'IRIS': ['sji']
 }
 
+
 def load_or_fetch_links():
     """
     Load media links from file if it exists; otherwise, fetch the links.
@@ -43,6 +44,7 @@ def load_or_fetch_links():
 
     return all_media_links
 
+
 def preprocess_links(all_media_links):
     """
     Preprocess media links to extract date and time, and filter out invalid dates.
@@ -58,6 +60,7 @@ def preprocess_links(all_media_links):
     date_time_from_all_media_links = [date for date in date_time_from_all_media_links if date not in invalid_dates]
 
     return date_time_from_all_media_links, all_media_links_with_date_time
+
 
 def generate_dataframe(date_time_from_all_media_links, all_media_links_with_date_time):
     """
@@ -96,6 +99,7 @@ def generate_dataframe(date_time_from_all_media_links, all_media_links_with_date
 
     return df
 
+
 def fix_duplicate_times(df):
     """
     Fix duplicate times in DataFrame by grouping rows based on time proximity.
@@ -132,6 +136,7 @@ def fix_duplicate_times(df):
 
     return grouped_df
 
+
 def add_existing_and_new_dataframes(new_df):
     """
     Add a potential new DataFrame to the old DataFrame file without losing any data.
@@ -148,8 +153,8 @@ def add_existing_and_new_dataframes(new_df):
     # Convert the strings in each column back to lists
     for col in columns_to_convert:
         existing_df[col] = existing_df[col].apply(lambda x: x.split(';') if isinstance(x, str) else [])
-    
-    # List of columns to convert from NaN to None 
+
+    # List of columns to convert from NaN to None
     columns_to_convert = ['comments', 'polarimetry', 'target']
 
     # Convert the NaNs in each column back to None
@@ -160,7 +165,8 @@ def add_existing_and_new_dataframes(new_df):
     df3 = pd.concat([existing_df, new_df])
     df3.drop_duplicates(subset=['date_time'], inplace=True, keep='first')
 
-    return df3 
+    return df3
+
 
 def main():
     """
