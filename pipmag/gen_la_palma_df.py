@@ -2,6 +2,7 @@ import os
 import pandas as pd
 from datetime import timedelta
 from pipmag import la_palma_utils as lp
+import numpy as np 
 
 # Constants
 MEDIA_LINKS_FILE = 'data/all_media_links.csv'
@@ -12,7 +13,9 @@ INSTRUMENT_KEYWORDS = {
     'CHROMIS': ['Chromis', 'cak', '4846'],
     'IRIS': ['sji']
 }
-
+POLARIMETRY_KEYWORDS = {
+    'True': ['Bz+Bh', 'blos', 'Blos']
+}
 
 def load_or_fetch_links():
     """
@@ -90,6 +93,7 @@ def generate_dataframe(date_time_from_all_media_links, all_media_links_with_date
 
     # Extract instrument info from links
     df['instruments'] = df['links'].apply(lambda x: lp.get_instrument_info(x, INSTRUMENT_KEYWORDS))
+    df['polarimetry'] = df['links'].apply(lambda x: lp.get_instrument_info(x, POLARIMETRY_KEYWORDS))
     df['video_links'] = df['links'].apply(lambda x: lp.get_links_with_string(x, ['mp4', 'mov']))
     df['image_links'] = df['links'].apply(lambda x: lp.get_links_with_string(x, ['jpg', 'png']))
 
@@ -136,7 +140,6 @@ def fix_duplicate_times(df):
 
     return grouped_df
 
-
 def add_existing_and_new_dataframes(new_df):
     """
     Add a potential new DataFrame to the old DataFrame file without losing any data.
@@ -153,8 +156,8 @@ def add_existing_and_new_dataframes(new_df):
     # Convert the strings in each column back to lists
     for col in columns_to_convert:
         existing_df[col] = existing_df[col].apply(lambda x: x.split(';') if isinstance(x, str) else [])
-
-    # List of columns to convert from NaN to None
+    
+    # List of columns to convert from NaN to None 
     columns_to_convert = ['comments', 'polarimetry', 'target']
 
     # Convert the NaNs in each column back to None
@@ -165,8 +168,7 @@ def add_existing_and_new_dataframes(new_df):
     df3 = pd.concat([existing_df, new_df])
     df3.drop_duplicates(subset=['date_time'], inplace=True, keep='first')
 
-    return df3
-
+    return df3 
 
 def main():
     """
