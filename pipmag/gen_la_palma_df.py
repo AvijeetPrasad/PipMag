@@ -2,7 +2,6 @@ import os
 import pandas as pd
 from datetime import timedelta
 from pipmag import la_palma_utils as lp
-import numpy as np 
 
 # Constants
 MEDIA_LINKS_FILE = 'data/all_media_links.csv'
@@ -156,8 +155,8 @@ def add_existing_and_new_dataframes(new_df):
     # Convert the strings in each column back to lists
     for col in columns_to_convert:
         existing_df[col] = existing_df[col].apply(lambda x: x.split(';') if isinstance(x, str) else [])
-    
-    # List of columns to convert from NaN to None 
+
+    # List of columns to convert from NaN to None
     columns_to_convert = ['comments', 'polarimetry', 'target']
 
     # Convert the NaNs in each column back to None
@@ -168,7 +167,7 @@ def add_existing_and_new_dataframes(new_df):
     df3 = pd.concat([existing_df, new_df])
     df3.drop_duplicates(subset=['date_time'], inplace=True, keep='first')
 
-    return df3 
+    return df3
 
 def main():
     """
