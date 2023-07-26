@@ -522,3 +522,134 @@ class VideoSelector3:
         for column_name in self.column_names:
             display(self.value_texts[column_name])
         display(self.update_button)
+
+
+class Query: 
+    def __init__(self, df): 
+        self.df = df 
+
+    def create_widget(self): 
+
+        # Create a dropdown widget for the instruments column (allows for several instruments to be selected)
+        self.instrument_dropdown = widgets.SelectMultiple(
+            options=self.df['instruments'].str.split(';').explode().str.strip().unique(),
+            description='Select Instruments:',
+            layout=widgets.Layout(width='300px')
+        )
+
+        # Create a dropdown widget for the year column
+        self.year_dropdown = widgets.Dropdown(
+            options=[''] + self.df['year'].unique().tolist(),
+            description='Select Year:',
+            layout=widgets.Layout(width='200px')
+        )
+
+        # Create a dropdown widget for the month column
+        self.month_dropdown = widgets.Dropdown(
+            options=[''] + self.df['month'].unique().tolist(),
+            description='Select Month:',
+            layout=widgets.Layout(width='200px')
+        )
+
+        # Create a dropdown widget for the day column
+        self.day_dropdown = widgets.Dropdown(
+            options=[''] + self.df['day'].unique().tolist(),
+            description='Select Day:',
+            layout=widgets.Layout(width='200px')
+        )
+
+        # Create a dropdown widget for the time column
+        self.time_dropdown = widgets.Dropdown(
+            options=[''] + self.df['time'].unique().tolist(),
+            description='Select Time:',
+            layout=widgets.Layout(width='200px')
+        )
+
+        # Create a dropdown widget for target selection
+        self.target_dropdown = widgets.Dropdown(
+            options=self.df['target'].str.split(';').explode().str.strip().unique(),
+            description='Select Target:',
+            layout=widgets.Layout(width='200px')
+        )
+
+        # Function to filter available dates based on selected instruments, year, month, day, and time
+        def filter_dates(instruments, year, month, day, time):
+            df_filtered = self.df
+            if instruments:
+                df_filtered = df_filtered[df_filtered['instruments'].apply(lambda x: any(item in instruments for item in x.split(';')))]
+            if year:
+                df_filtered = df_filtered[df_filtered['year'] == year]
+            if month:
+                df_filtered = df_filtered[df_filtered['month'] == month]
+            if day:
+                df_filtered = df_filtered[df_filtered['day'] == day]
+            if time:
+                df_filtered = df_filtered[df_filtered['time'] == time]
+            return df_filtered['month'].dropna().unique()
+
+        # Function to filter available targets based on selected instruments, year, month, day, and time
+        def filter_targets(selected_instruments, selected_year, selected_month, selected_day, selected_time):
+            df_filtered = self.df
+            if selected_instruments:
+                df_filtered = df_filtered[df_filtered['instruments'].apply(lambda x: any(item in selected_instruments for item in x.split(';')))]
+            if selected_year:
+                df_filtered = df_filtered[df_filtered['year'] == selected_year]
+            if selected_month:
+                df_filtered = df_filtered[df_filtered['month'] == selected_month]
+            if selected_day:
+                df_filtered = df_filtered[df_filtered['day'] == selected_day]
+            if selected_time:
+                df_filtered = df_filtered[df_filtered['time'] == selected_time]
+            return df_filtered['target'].str.split(';').explode().str.strip().dropna().unique()
+
+        # Function to update the filtered dates and targets based on instrument, year, month, day, and time selection
+        def update_date_and_target(change):
+            selected_instruments = self.instrument_dropdown.value
+            selected_year = self.year_dropdown.value
+            selected_month = self.month_dropdown.value
+            selected_day = self.day_dropdown.value
+            selected_time = self.time_dropdown.value
+            
+            filtered_dates = filter_dates(selected_instruments, selected_year, selected_month, selected_day, selected_time)
+            self.month_dropdown.options = [''] + filtered_dates.tolist()
+            
+            filtered_targets = filter_targets(selected_instruments, selected_year, selected_month, selected_day, selected_time)
+            self.target_dropdown.options = filtered_targets
+
+            # Apply filters and display the resulting DataFrame
+            filtered_df = self.df
+            if selected_instruments:
+                filtered_df = filtered_df[filtered_df['instruments'].apply(lambda x: any(item in selected_instruments for item in x.split(';')))]
+            if selected_year:
+                filtered_df = filtered_df[filtered_df['year'] == selected_year]
+            if selected_month:
+                filtered_df = filtered_df[filtered_df['month'] == selected_month]
+            if selected_day:
+                filtered_df = filtered_df[filtered_df['day'] == selected_day]
+            if selected_time:
+                filtered_df = filtered_df[filtered_df['time'] == selected_time]
+
+            # Display the resulting DataFrame
+            with output:
+                clear_output(wait=True)
+                display(filtered_df)
+        
+        # Attach the update_date_and_target function to the dropdowns' value change event
+        self.instrument_dropdown.observe(update_date_and_target, names='value')
+        self.year_dropdown.observe(update_date_and_target, names='value')
+        self.month_dropdown.observe(update_date_and_target, names='value')
+        self.day_dropdown.observe(update_date_and_target, names='value')
+        self.time_dropdown.observe(update_date_and_target, names='value')
+        self.target_dropdown.observe(update_date_and_target, names='value')
+
+        # Create an output widget to display the resulting DataFrame
+        output = widgets.Output()
+
+        # Display the instrument, year, month, day, time, target widgets, and output widget
+        display(self.instrument_dropdown)
+        display(self.year_dropdown)
+        display(self.month_dropdown)
+        display(self.day_dropdown)
+        display(self.time_dropdown)
+        display(self.target_dropdown)
+        display(output)
