@@ -590,10 +590,11 @@ class Query:
             selected_end_date    = self.end_date_dropdown.value
             selected_start_time  = self.start_time_dropdown.value
             selected_end_time    = self.end_time_dropdown.value
+            selected_target      = self.target_dropdown.value
             
             # filtered_dates = filter_dates(selected_instruments, selected_start_date, selected_end_date, selected_start_time, selected_end_time)            
-            filtered_targets = filter_targets(selected_instruments, selected_start_date, selected_end_date, selected_start_time, selected_end_time)
-            self.target_dropdown.options = filtered_targets
+            # filtered_targets = filter_targets(selected_instruments, selected_start_date, selected_end_date, selected_start_time, selected_end_time)
+            # self.target_dropdown.options = filtered_targets
 
             # Apply filters and display the resulting DataFrame
             filtered_df = self.df
@@ -608,23 +609,27 @@ class Query:
             if selected_end_time:
                 filtered_df = filtered_df[pd.to_datetime(filtered_df['time']).dt.time <= pd.to_datetime(selected_end_time).time()]
             # if selected_target: 
-                # filtered_df = filtered_df[filtered_df['target'].apply(lambda x: any(item in selected_target for item in x.split(';')))]
+                # filtered_df = filtered_df[filtered_df['target']]
 
-            # filtered_targets = filter_targets(selected_instruments, selected_start_date, selected_end_date, selected_start_time, selected_end_time)
-            # self.target_dropdown.options = filtered_targets
+            filtered_targets = filter_targets(selected_instruments, selected_start_date, selected_end_date, selected_start_time, selected_end_time)
+            self.target_dropdown.options = filtered_targets
 
             # Display the resulting DataFrame
             with output:
                 clear_output(wait=True)
                 display(filtered_df)
+            
+        # Create an "Update" button
+        update_button = widgets.Button(description='Update')
+        update_button.on_click(update_date_and_target)
         
-        # Attach the update_date_and_target function to the dropdowns' value change event
-        self.instrument_dropdown.observe(update_date_and_target, names='value')
-        self.start_date_dropdown.observe(update_date_and_target, names='value')
-        self.end_date_dropdown.observe(update_date_and_target, names='value')
-        self.start_time_dropdown.observe(update_date_and_target, names='value')
-        self.end_time_dropdown.observe(update_date_and_target, names='value')
-        self.target_dropdown.observe(update_date_and_target, names='value')
+        # # Attach the update_date_and_target function to the dropdowns' value change event
+        # self.instrument_dropdown.observe(update_date_and_target, names='value')
+        # self.start_date_dropdown.observe(update_date_and_target, names='value')
+        # self.end_date_dropdown.observe(update_date_and_target, names='value')
+        # self.start_time_dropdown.observe(update_date_and_target, names='value')
+        # self.end_time_dropdown.observe(update_date_and_target, names='value')
+        # self.target_dropdown.observe(update_date_and_target, names='value')
 
         # Create an output widget to display the resulting DataFrame
         output = widgets.Output()
@@ -636,4 +641,5 @@ class Query:
         display(self.start_time_dropdown)
         display(self.end_time_dropdown)
         display(self.target_dropdown)
+        display(update_button)  # Display the "Update" button
         display(output)
