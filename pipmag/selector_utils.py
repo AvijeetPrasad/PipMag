@@ -533,48 +533,28 @@ class Query:
         # Create a dropdown widget for the instruments column (allows for several instruments to be selected)
         self.instrument_dropdown = widgets.SelectMultiple(
             options=self.df['instruments'].str.split(';').explode().str.strip().unique(),
-            description='Select Instruments:',
+            description='Instruments:',
             layout=widgets.Layout(width='300px')
+            # layout=widgets.Layout(width='300px', description_width='300px'), 
+            # HBox = widgets.HBox([widgets.Label('Select Instruments:'), self.instrument_dropdown])
         )
 
-        # Create a dropdown widget for start date selection
-        self.start_date_dropdown = widgets.Dropdown(
-            options=[''] + pd.to_datetime(self.df['date_time']).dt.date.unique().astype(str).tolist(),
-            description='Select Start Date:',
-            layout=widgets.Layout(width='200px')
-        )
-
-        # Create a dropdown widget for end date selection
-        self.end_date_dropdown = widgets.Dropdown(
-            options=[''] + pd.to_datetime(self.df['date_time']).dt.date.unique().astype(str).tolist(),
-            description='Select End Date:',
-            layout=widgets.Layout(width='200px')
-        )
-
-        # Create a dropdown widget for start time selection
-        self.start_time_dropdown = widgets.Dropdown(
-            options=[''] + pd.to_datetime(self.df['time']).dt.time.unique().astype(str).tolist(),
-            description='Select Start Time:',
-            layout=widgets.Layout(width='200px')
-        )
-
-        # Create a dropdown widget for end time selection
-        self.end_time_dropdown = widgets.Dropdown(
-            options=[''] + pd.to_datetime(self.df['time']).dt.time.unique().astype(str).tolist(),
-            description='Select End Time:',
-            layout=widgets.Layout(width='200px')
-        )
+        self.start_date_dropdown = widgets.DatePicker(description='Start Date:', continuous_update=False)
+        self.end_date_dropdown = widgets.DatePicker(description='End Date:', continuous_update=False)
+        self.start_time_dropdown = widgets.Text(description='Start Time:', value='00:00')
+        self.end_time_dropdown = widgets.Text(description='End Time:', value='23:59')
 
         # Create a dropdown widget for target selection
         self.target_dropdown = widgets.Dropdown(
-            options=self.df['target'].str.split(';').explode().str.strip().unique(),
+            options=self.df['target'].str.split(',').explode().str.strip().unique(),
             description='Select Target:',
-            layout=widgets.Layout(width='200px')
+            layout=widgets.Layout(width='200px', description_width='300px')
         )
 
         # Function to filter available dates based on selected instruments, start date, end date, start time, and end time
         def filter_dates(instruments, start_date, end_date, start_time, end_time):
             df_filtered = self.df
+    
             if instruments:
                 df_filtered = df_filtered[df_filtered['instruments'].apply(lambda x: any(item in instruments for item in x.split(';')))]
             if start_date:
@@ -585,7 +565,7 @@ class Query:
                 df_filtered = df_filtered[pd.to_datetime(df_filtered['time']).dt.time >= pd.to_datetime(start_time).time()]
             if end_time:
                 df_filtered = df_filtered[pd.to_datetime(df_filtered['time']).dt.time <= pd.to_datetime(end_time).time()]
-            return df_filtered['month'].dropna().unique()
+            return df_filtered['time'].dropna().unique()
 
         # Function to filter available targets based on selected instruments, start date, end date, start time, and end time
         def filter_targets(selected_instruments, start_date, end_date, start_time, end_time):
@@ -600,19 +580,18 @@ class Query:
                 df_filtered = df_filtered[pd.to_datetime(df_filtered['time']).dt.time >= pd.to_datetime(start_time).time()]
             if end_time:
                 df_filtered = df_filtered[pd.to_datetime(df_filtered['time']).dt.time <= pd.to_datetime(end_time).time()]
-            return df_filtered['target'].str.split(';').explode().str.strip().dropna().unique()
+            return df_filtered['target'].str.split(',').explode().str.strip().dropna().unique()
+            # return df_filtered['target'].apply(lambda x: any(item in selected_instruments for item in x.split(';')))
 
         # Function to update the filtered dates and targets based on instrument, start date, end date, start time, and end time selection
         def update_date_and_target(change):
             selected_instruments = self.instrument_dropdown.value
-            selected_start_date = self.start_date_dropdown.value
-            selected_end_date = self.end_date_dropdown.value
-            selected_start_time = self.start_time_dropdown.value
-            selected_end_time = self.end_time_dropdown.value
+            selected_start_date  = self.start_date_dropdown.value
+            selected_end_date    = self.end_date_dropdown.value
+            selected_start_time  = self.start_time_dropdown.value
+            selected_end_time    = self.end_time_dropdown.value
             
-            filtered_dates = filter_dates(selected_instruments, selected_start_date, selected_end_date, selected_start_time, selected_end_time)
-            # self.month_dropdown.options = [''] + filtered_dates.tolist()
-            
+            # filtered_dates = filter_dates(selected_instruments, selected_start_date, selected_end_date, selected_start_time, selected_end_time)            
             filtered_targets = filter_targets(selected_instruments, selected_start_date, selected_end_date, selected_start_time, selected_end_time)
             self.target_dropdown.options = filtered_targets
 
@@ -628,6 +607,11 @@ class Query:
                 filtered_df = filtered_df[pd.to_datetime(filtered_df['time']).dt.time >= pd.to_datetime(selected_start_time).time()]
             if selected_end_time:
                 filtered_df = filtered_df[pd.to_datetime(filtered_df['time']).dt.time <= pd.to_datetime(selected_end_time).time()]
+            # if selected_target: 
+                # filtered_df = filtered_df[filtered_df['target'].apply(lambda x: any(item in selected_target for item in x.split(';')))]
+
+            # filtered_targets = filter_targets(selected_instruments, selected_start_date, selected_end_date, selected_start_time, selected_end_time)
+            # self.target_dropdown.options = filtered_targets
 
             # Display the resulting DataFrame
             with output:
@@ -649,4 +633,7 @@ class Query:
         display(self.instrument_dropdown)
         display(self.start_date_dropdown)
         display(self.end_date_dropdown)
+        display(self.start_time_dropdown)
+        display(self.end_time_dropdown)
+        display(self.target_dropdown)
         display(output)
