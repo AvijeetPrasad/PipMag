@@ -567,9 +567,8 @@ class Query:
                 df_filtered = df_filtered[pd.to_datetime(df_filtered['time']).dt.time <= pd.to_datetime(end_time).time()]
             return df_filtered['time'].dropna().unique()
 
-        # Function to filter available targets based on selected instruments, start date, end date, start time, and end time
-        def filter_targets(selected_instruments, start_date, end_date, start_time, end_time):
-            df_filtered = self.df
+        def filter_targets(df, selected_instruments, start_date, end_date, start_time, end_time):
+            df_filtered = df
             if selected_instruments:
                 df_filtered = df_filtered[df_filtered['instruments'].apply(lambda x: any(item in selected_instruments for item in x.split(';')))]
             if start_date:
@@ -581,7 +580,6 @@ class Query:
             if end_time:
                 df_filtered = df_filtered[pd.to_datetime(df_filtered['time']).dt.time <= pd.to_datetime(end_time).time()]
             return df_filtered['target'].str.split(',').explode().str.strip().dropna().unique()
-            # return df_filtered['target'].apply(lambda x: any(item in selected_instruments for item in x.split(';')))
 
         # Function to update the filtered dates and targets based on instrument, start date, end date, start time, and end time selection
         def update_date_and_target(change):
@@ -592,10 +590,6 @@ class Query:
             selected_end_time    = self.end_time_dropdown.value
             selected_target      = self.target_dropdown.value
             
-            # filtered_dates = filter_dates(selected_instruments, selected_start_date, selected_end_date, selected_start_time, selected_end_time)            
-            # filtered_targets = filter_targets(selected_instruments, selected_start_date, selected_end_date, selected_start_time, selected_end_time)
-            # self.target_dropdown.options = filtered_targets
-
             # Apply filters and display the resulting DataFrame
             filtered_df = self.df
             if selected_instruments:
@@ -608,22 +602,22 @@ class Query:
                 filtered_df = filtered_df[pd.to_datetime(filtered_df['time']).dt.time >= pd.to_datetime(selected_start_time).time()]
             if selected_end_time:
                 filtered_df = filtered_df[pd.to_datetime(filtered_df['time']).dt.time <= pd.to_datetime(selected_end_time).time()]
-            # if selected_target: 
-                # filtered_df = filtered_df[filtered_df['target']]
 
-            filtered_targets = filter_targets(selected_instruments, selected_start_date, selected_end_date, selected_start_time, selected_end_time)
+            # Filter the targets based on the selected instruments and other criteria
+            filtered_targets = filter_targets(filtered_df, selected_instruments, selected_start_date, selected_end_date, selected_start_time, selected_end_time)
             self.target_dropdown.options = filtered_targets
 
             # Display the resulting DataFrame
             with output:
                 clear_output(wait=True)
                 display(filtered_df)
+
             
         # Create an "Update" button
-        update_button = widgets.Button(description='Update')
+        update_button = widgets.Button(description='Search Data')
         update_button.on_click(update_date_and_target)
         
-        # # Attach the update_date_and_target function to the dropdowns' value change event
+
         # self.instrument_dropdown.observe(update_date_and_target, names='value')
         # self.start_date_dropdown.observe(update_date_and_target, names='value')
         # self.end_date_dropdown.observe(update_date_and_target, names='value')
@@ -641,5 +635,6 @@ class Query:
         display(self.start_time_dropdown)
         display(self.end_time_dropdown)
         display(self.target_dropdown)
+
         display(update_button)  # Display the "Update" button
         display(output)
