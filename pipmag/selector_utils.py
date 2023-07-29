@@ -533,7 +533,7 @@ class Query:
         # Create a dropdown widget for the instruments column (allows for several instruments to be selected)
         self.instrument_dropdown = widgets.SelectMultiple(
             options=self.df['instruments'].str.split(';').explode().str.strip().unique(),
-            description='Instruments:',
+            description='Instrument(s):',
             layout=widgets.Layout(width='300px')
             # layout=widgets.Layout(width='300px', description_width='300px'), 
             # HBox = widgets.HBox([widgets.Label('Select Instruments:'), self.instrument_dropdown])
@@ -548,23 +548,16 @@ class Query:
         # Create a dropdown widget for target selection
         self.target_dropdown = widgets.Dropdown(
             options=self.df['target'].str.split(',').explode().str.strip().unique(),
-            description='Select Target:',
-            layout=widgets.Layout(width='200px', description_width='300px')
+            description='Target(s):',
+            layout=widgets.Layout(width='300px', description_width='300px')
         )
 
-        def filter_targets(df, selected_instruments, start_date, end_date, start_time, end_time):
-            df_filtered = df
-            if selected_instruments:
-                df_filtered = df_filtered[df_filtered['instruments'].apply(lambda x: any(item in selected_instruments for item in x.split(';')))]
-            if start_date:
-                df_filtered = df_filtered[pd.to_datetime(df_filtered['date_time']).dt.date >= pd.to_datetime(start_date).date()]
-            if end_date:
-                df_filtered = df_filtered[pd.to_datetime(df_filtered['date_time']).dt.date <= pd.to_datetime(end_date).date()]
-            if start_time:
-                df_filtered = df_filtered[pd.to_datetime(df_filtered['time']).dt.time >= pd.to_datetime(start_time).time()]
-            if end_time:
-                df_filtered = df_filtered[pd.to_datetime(df_filtered['time']).dt.time <= pd.to_datetime(end_time).time()]
-            return df_filtered['target'].str.split(',').explode().str.strip().dropna().unique()
+        # Create a slider for spectroscopic or polarimetric mode selection 
+        self.observation_mode_dropdown = widgets.Dropdown(
+            options=self.df['polarimetry'].unique(),
+            description='Observation mode:',
+            layout=widgets.Layout(width='200px', description_width='300px')
+        )
 
         # Function to update the filtered dates and targets based on instrument, start date, end date, start time, and end time selection
         def update_date_and_target(change):
@@ -577,8 +570,11 @@ class Query:
 
             filtered_df = self.df
 
+            # Filter the result based on selected instruments 
             if selected_instruments:
                 filtered_df = filtered_df[filtered_df['instruments'].apply(lambda x: any(item in selected_instruments for item in x.split(';')))]
+            
+            # Filter the result based on the selected start date, end date, start time, and end time
             if selected_start_date:
                 filtered_df = filtered_df[pd.to_datetime(filtered_df['date_time']).dt.date >= pd.to_datetime(selected_start_date).date()]
             if selected_end_date:
@@ -587,37 +583,27 @@ class Query:
                 filtered_df = filtered_df[pd.to_datetime(filtered_df['time']).dt.time >= pd.to_datetime(selected_start_time).time()]
             if selected_end_time:
                 filtered_df = filtered_df[pd.to_datetime(filtered_df['time']).dt.time <= pd.to_datetime(selected_end_time).time()]
-
-            # Filter the targets based on the selected instruments and other criteria
-            ## commented out below## 
-            # filtered_targets = filter_targets(filtered_df, selected_instruments, selected_start_date, selected_end_date, selected_start_time, selected_end_time)
-            # self.target_dropdown.options = filtered_targets
             
+            # Filter the result based on polarimetric or spectroscopic mode
+            if self.observation_mode_dropdown.value == False:
+                filtered_df = filtered_df[filtered_df['polarimetry'] == False]
+            elif self.observation_mode_dropdown.value == True:
+                filtered_df = filtered_df[filtered_df['polarimetry'] == True]
 
-            ## Trying this below##
+            # Filter the result based on the selected targets 
             filtered_targets = filtered_df['target'].str.split(',').explode().str.strip().dropna().unique()
             self.target_dropdown.options = filtered_targets
-            
             if selected_target:
-                filtered_df = filtered_df[filtered_df['target'].str.contains(selected_target)]
+                filtered_df = filtered_df[filtered_df['target'].str.contains(selected_target)] # Does not work with None 
 
             # Display the resulting DataFrame
             with output:
                 clear_output(wait=True)
-                display(filtered_df)
-
+                display(filtered_df[['date_time', 'instruments', 'target', 'polarimetry']])
             
         # Create an "Update" button
         update_button = widgets.Button(description='Search Data')
         update_button.on_click(update_date_and_target)
-        
-
-        # self.instrument_dropdown.observe(update_date_and_target, names='value')
-        # self.start_date_dropdown.observe(update_date_and_target, names='value')
-        # self.end_date_dropdown.observe(update_date_and_target, names='value')
-        # self.start_time_dropdown.observe(update_date_and_target, names='value')
-        # self.end_time_dropdown.observe(update_date_and_target, names='value')
-        # self.target_dropdown.observe(update_date_and_target, names='value')
 
         # Create an output widget to display the resulting DataFrame
         output = widgets.Output()
@@ -628,6 +614,7 @@ class Query:
         display(self.end_date_dropdown)
         display(self.start_time_dropdown)
         display(self.end_time_dropdown)
+        display(self.observation_mode_dropdown)
         display(self.target_dropdown)
 
         display(update_button)  # Display the "Update" button
