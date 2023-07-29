@@ -539,10 +539,11 @@ class Query:
             # HBox = widgets.HBox([widgets.Label('Select Instruments:'), self.instrument_dropdown])
         )
 
+        # Create picker widgets for the start date, end date, start time, and end time 
         self.start_date_dropdown = widgets.DatePicker(description='Start Date:', continuous_update=False)
-        self.end_date_dropdown = widgets.DatePicker(description='End Date:', continuous_update=False)
-        self.start_time_dropdown = widgets.Text(description='Start Time:', value='00:00')
-        self.end_time_dropdown = widgets.Text(description='End Time:', value='23:59')
+        self.end_date_dropdown   = widgets.DatePicker(description='End Date:'  , continuous_update=False)
+        self.start_time_dropdown = widgets.Text(      description='Start Time:', value='00:00'          )
+        self.end_time_dropdown   = widgets.Text(      description='End Time:'  , value='23:59'          )
 
         # Create a dropdown widget for target selection
         self.target_dropdown = widgets.Dropdown(
@@ -550,22 +551,6 @@ class Query:
             description='Select Target:',
             layout=widgets.Layout(width='200px', description_width='300px')
         )
-
-        # Function to filter available dates based on selected instruments, start date, end date, start time, and end time
-        def filter_dates(instruments, start_date, end_date, start_time, end_time):
-            df_filtered = self.df
-    
-            if instruments:
-                df_filtered = df_filtered[df_filtered['instruments'].apply(lambda x: any(item in instruments for item in x.split(';')))]
-            if start_date:
-                df_filtered = df_filtered[pd.to_datetime(df_filtered['date_time']).dt.date >= pd.to_datetime(start_date).date()]
-            if end_date:
-                df_filtered = df_filtered[pd.to_datetime(df_filtered['date_time']).dt.date <= pd.to_datetime(end_date).date()]
-            if start_time:
-                df_filtered = df_filtered[pd.to_datetime(df_filtered['time']).dt.time >= pd.to_datetime(start_time).time()]
-            if end_time:
-                df_filtered = df_filtered[pd.to_datetime(df_filtered['time']).dt.time <= pd.to_datetime(end_time).time()]
-            return df_filtered['time'].dropna().unique()
 
         def filter_targets(df, selected_instruments, start_date, end_date, start_time, end_time):
             df_filtered = df
@@ -589,9 +574,9 @@ class Query:
             selected_start_time  = self.start_time_dropdown.value
             selected_end_time    = self.end_time_dropdown.value
             selected_target      = self.target_dropdown.value
-            
-            # Apply filters and display the resulting DataFrame
+
             filtered_df = self.df
+
             if selected_instruments:
                 filtered_df = filtered_df[filtered_df['instruments'].apply(lambda x: any(item in selected_instruments for item in x.split(';')))]
             if selected_start_date:
@@ -604,8 +589,17 @@ class Query:
                 filtered_df = filtered_df[pd.to_datetime(filtered_df['time']).dt.time <= pd.to_datetime(selected_end_time).time()]
 
             # Filter the targets based on the selected instruments and other criteria
-            filtered_targets = filter_targets(filtered_df, selected_instruments, selected_start_date, selected_end_date, selected_start_time, selected_end_time)
+            ## commented out below## 
+            # filtered_targets = filter_targets(filtered_df, selected_instruments, selected_start_date, selected_end_date, selected_start_time, selected_end_time)
+            # self.target_dropdown.options = filtered_targets
+            
+
+            ## Trying this below##
+            filtered_targets = filtered_df['target'].str.split(',').explode().str.strip().dropna().unique()
             self.target_dropdown.options = filtered_targets
+            
+            if selected_target:
+                filtered_df = filtered_df[filtered_df['target'].str.contains(selected_target)]
 
             # Display the resulting DataFrame
             with output:
