@@ -549,7 +549,7 @@ class Query:
         self.target_dropdown = widgets.Dropdown(
             options=self.df['target'].str.split(',').explode().str.strip().unique(),
             description='Target(s):',
-            layout=widgets.Layout(width='300px', description_width='300px')
+            layout=widgets.Layout(width='300px')
         )
 
         # Create a slider for spectroscopic or polarimetric mode selection 
@@ -586,14 +586,15 @@ class Query:
             
             # Filter the result based on polarimetric or spectroscopic mode
             if self.observation_mode_dropdown.value == False:
-                filtered_df = filtered_df[filtered_df['polarimetry'] == False]
+                filtered_df = filtered_df[filtered_df['polarimetry'] == False] # Spectroscopic mode
             elif self.observation_mode_dropdown.value == True:
-                filtered_df = filtered_df[filtered_df['polarimetry'] == True]
+                filtered_df = filtered_df[filtered_df['polarimetry'] == True]  # Polarimetric mode
 
             # Filter the result based on the selected targets 
             filtered_targets = filtered_df['target'].str.split(',').explode().str.strip().dropna().unique()
             self.target_dropdown.options = filtered_targets
             if selected_target:
+                # filtered_df = filtered_df[filtered_df['target'].apply(lambda x: any(item in selected_target for item in x.split(',')))]
                 filtered_df = filtered_df[filtered_df['target'].str.contains(selected_target)] # Does not work with None 
 
             # Display the resulting DataFrame
