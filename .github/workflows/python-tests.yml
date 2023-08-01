@@ -1,0 +1,43 @@
+# Name of the workflow
+name: Python package
+
+# This workflow gets triggered on push and pull requests on any branch
+on: [push, pull_request]
+
+# If you want to restrict the workflow to only the main branch, use this instead:
+# on:
+#   push:
+#     branches: [ main ]
+#   pull_request:
+#     branches: [ main ]
+
+# This workflow contains a single job called 'build'
+jobs:
+  build:
+
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+    
+    # Checks out a copy of your repository on the ubuntu-latest machine
+    - uses: actions/checkout@v2
+    
+    # This step sets up a python environment using Python 3.11
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.11
+    
+    # This step installs the project's dependencies
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pytest
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+    
+    # This step runs the pytest command which runs the test suite
+    - name: Test with pytest
+      run: |
+        pytest tests/
