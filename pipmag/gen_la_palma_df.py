@@ -92,7 +92,7 @@ def generate_dataframe(date_time_from_all_media_links, all_media_links_with_date
 
     # Extract instrument info from links
     df['instruments'] = df['links'].apply(lambda x: lp.get_instrument_info(x, INSTRUMENT_KEYWORDS))
-    df['polarimetry'] = df['links'].apply(lambda x: lp.get_instrument_info(x, POLARIMETRY_KEYWORDS))
+    df['polarimetry'] = df['links'].apply(lambda x: lp.get_instrument_info(x, POLARIMETRY_KEYWORDS, 'False'))
     df['video_links'] = df['links'].apply(lambda x: lp.get_links_with_string(x, ['mp4', 'mov']))
     df['image_links'] = df['links'].apply(lambda x: lp.get_links_with_string(x, ['jpg', 'png']))
 
