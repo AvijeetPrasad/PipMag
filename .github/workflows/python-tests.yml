@@ -22,7 +22,10 @@ jobs:
     steps:
     
     # Checks out a copy of your repository on the ubuntu-latest machine
-    - uses: actions/checkout@v2
+    - name: Checkout repository
+      uses: actions/checkout@v2
+      with:
+        lfs: true  # This tells the action to download Git LFS files.
     
     # This step sets up a python environment using Python 3.11
     - name: Set up Python 3.11
