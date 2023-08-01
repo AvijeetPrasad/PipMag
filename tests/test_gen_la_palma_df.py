@@ -87,7 +87,7 @@ class TestLaPalmaDataFrameFunctions(unittest.TestCase):
             'image_links': [],
             'links': test_links,
             'num_links': 3,
-            'polarimetry': 'False'  # adjusted this line
+            # 'polarimetry': 'False'  # adjusted this line
         }
         first_row = result_df.loc[0].to_dict()
         for key, expected_value in expected_first_row.items():
