@@ -799,8 +799,7 @@ def search_string_in_list(string_list, pattern):
     else:
         return matched_string
 
-
-def get_instrument_info(link_list, instrument_keywords):
+def get_instrument_info(link_list, instrument_keywords, default_return=None):
     """
     Retrieves instrument information from a list of links based on instrument keywords.
 
@@ -811,12 +810,14 @@ def get_instrument_info(link_list, instrument_keywords):
     instrument_keywords : dict
         A dictionary where the keys represent instrument names
         and the values are lists of keywords associated with each instrument.
+    default_return : any, optional
+        The value to return when no instruments are found. If not provided, None is returned.
 
     Returns
     -------
     list or None
         A list of instruments extracted from the link_list based on the instrument keywords.
-        If no instruments are found, None is returned.
+        If no instruments are found, default_return is returned.
 
     Dependencies
     ------------
@@ -829,7 +830,7 @@ def get_instrument_info(link_list, instrument_keywords):
     It iterates over each link in the link_list and checks if any of the instrument keywords are present in the link.
     If a keyword is found, the corresponding instrument is added to the result set.
     The function returns a list of instruments extracted from the link_list based on the instrument keywords,
-    or None if no instruments are found.
+    or default_return if no instruments are found.
 
     Examples
     --------
@@ -851,9 +852,9 @@ def get_instrument_info(link_list, instrument_keywords):
                 if keyword in string:
                     result.add(instrument)
                     break
-    # if no instrument is found, return None
+    # if no instrument is found, return default_return
     if len(result) == 0:
-        return None
+        return default_return
     return list(result)
 
 
