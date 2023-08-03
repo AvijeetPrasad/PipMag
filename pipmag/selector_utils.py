@@ -529,6 +529,9 @@ class VideoSelector3:
 class Query: 
     def __init__(self, df): 
         self.df = df 
+        self.target_dropdown = None  # Initialize target_dropdown as None
+    
+    
 
     def create_widget(self): 
 
@@ -558,29 +561,21 @@ class Query:
             layout=widgets.Layout(width='200px', description_width='300px')
         )
 
-        # # Create a dropdown widget for target selection
-        # self.target_dropdown = widgets.Dropdown(
-        #     options= [''] + self.df['target'].str.split(',').explode().str.strip().unique(),
-        #     description='Target(s):',
-        #     layout=widgets.Layout(width='300px')
-        # )
-
         # Create a dropdown widget for target selection
         self.target_dropdown = widgets.SelectMultiple(
             options=[''] + self.df['target'].str.split(',').explode().str.strip().unique(),
             description='Target(s):',
-            value=[''],  # Set the default value to ['None']
             layout=widgets.Layout(width='300px')
         )
 
         # Function to update the filtered dates and targets based on instrument, start date, end date, start time, and end time selection
-        def update_date_and_target(change):
+        def update_target_options(change):
             selected_instruments = self.instrument_dropdown.value
             selected_start_date  = self.start_date_dropdown.value
             selected_end_date    = self.end_date_dropdown.value
             selected_start_time  = self.start_time_dropdown.value
             selected_end_time    = self.end_time_dropdown.value
-            selected_target      = self.target_dropdown.value
+            # selected_target      = self.target_dropdown.value
 
             filtered_df = self.df
 
@@ -606,20 +601,41 @@ class Query:
             elif self.observation_mode_dropdown == 'All':
                 pass
 
-            # Filter the result based on the selected targets 
-            # filtered_targets = filtered_df['target'].str.split(',').explode().str.strip().dropna().unique()
-            # self.target_dropdown.options = filtered_targets
-            # if selected_target:
-            #     # filtered_df = filtered_df[filtered_df['target'].apply(lambda x: any(item in selected_target for item in x.split(',')))]
-            #     filtered_df = filtered_df[filtered_df['target'].str.contains(selected_target)] # Does not work with None 
-            
+            # Update the 'target' dropdown options based on the filtered DataFrame after the button is clicked
+            target_options = [''] + filtered_df['target'].str.split(',').explode().str.strip().dropna().unique()
+            self.target_dropdown.options = target_options
+
+            selected_target = self.target_dropdown.value
+
+            # Filter the result based on the selected targets
             if 'None' not in selected_target:
-                filtered_df = filtered_df[filtered_df['target'].apply(lambda x: any(item in selected_target for item in x.split(',')))]
-            else:
-                filtered_df = filtered_df[
-                    (filtered_df['target'].isnull()) |  # Handles the case where target column is NaN
-                    (filtered_df['target'] == 'None')   # Handles the case where target is the string 'None'
-                ]
+                # Combine selected targets with a regex OR '|' to search for any keyword
+                target_pattern = '|'.join(selected_target)
+                # Use str.contains() with the combined pattern
+                filtered_df = filtered_df[filtered_df['target'].str.contains(target_pattern)]
+
+            # Filter the result based on selected instruments
+            selected_instruments = self.instrument_dropdown.value
+            if selected_instruments:
+                filtered_df = filtered_df[filtered_df['instruments'].apply(lambda x: any(item in selected_instruments for item in x.split(';')))]
+
+            # Filter the result based on polarimetric or spectroscopic mode
+            if self.observation_mode_dropdown.value == False:
+                filtered_df = filtered_df[filtered_df['polarimetry'] == False]  # Spectroscopic mode
+            elif self.observation_mode_dropdown.value == True:
+                filtered_df = filtered_df[filtered_df['polarimetry'] == True]  # Polarimetric mode
+            elif self.observation_mode_dropdown.value == 'All':
+                pass
+
+            # Store the filtered DataFrame in an instance variable
+            self.filtered_df = filtered_df
+
+
+        def update_targets(change):
+            update_target_options(change)
+
+            # Start with the filtered DataFrame from update_target_options
+            filtered_df = self.filtered_df.copy()
 
             # Store the filtered DataFrame in an instance variable
             self.filtered_df = filtered_df
@@ -629,15 +645,18 @@ class Query:
                 clear_output(wait=True)
                 display_df = filtered_df[['date_time', 'instruments', 'target', 'comments', 'polarimetry']].copy()
                 display_df['video_link'] = filtered_df['video_links'].str.split(';').str[0]  # Extract the first link
-                display_df['video_link'] = display_df['video_link'].apply(lambda x: f'<a href="{x}" target="_blank">Video Link</a>' if pd.notnull(x) else '')  # Convert to clickable link
+                display_df['video_link'] = display_df['video_link'].apply(
+                    lambda x: f'<a href="{x}" target="_blank">Video Link</a>' if pd.notnull(x) else '')  # Convert to clickable link
                 display(HTML(display_df.to_html(escape=False)))
 
-                
 
-            
         # Create an "Update" button
         update_button = widgets.Button(description='Search Data')
-        update_button.on_click(update_date_and_target)
+        update_button.on_click(update_target_options)
+
+        # Create a display button 
+        display_button = widgets.Button(description='Display Data')
+        display_button.on_click(update_targets)
 
         # Create an output widget to display the resulting DataFrame
         output = widgets.Output()
@@ -653,11 +672,11 @@ class Query:
         display(self.start_time_dropdown)
         display(self.end_time_dropdown)
         display(self.observation_mode_dropdown)
+        display(update_button)                  # Display the "Update" button
         display(self.target_dropdown)
-
-        display(update_button)  # Display the "Update" button
-        display(save_button)    # Display the "Save Data" button
+        display(display_button)                 # Display the "Display Data" button
         display(output)
+        display(save_button)                    # Display the "Save Data" button
     
     def save_filtered_data(self, _):
 
