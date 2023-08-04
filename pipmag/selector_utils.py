@@ -546,10 +546,10 @@ class Query:
 
         # Create picker widgets for the start date, end date, start time, and end time 
         self.start_date_dropdown = widgets.DatePicker(description='Start Date:', \
-            value=datetime.date(self.df['year'].min(), self.df['month'].min(), self.df['day'].min()), \
+            value=pd.to_datetime(self.df['date_time']).dt.date.min(), \
                 continuous_update=False)
         self.end_date_dropdown   = widgets.DatePicker(description='End Date:'  , \
-            value=datetime.date(self.df['year'].max(), self.df['month'].max(), self.df['day'].max()), \
+            value=pd.to_datetime(self.df['date_time']).dt.date.max(), \
                 continuous_update=False)
         self.start_time_dropdown = widgets.Text(      description='Start Time:', value='00:00'          )
         self.end_time_dropdown   = widgets.Text(      description='End Time:'  , value='23:59'          )
@@ -575,7 +575,6 @@ class Query:
             selected_end_date    = self.end_date_dropdown.value
             selected_start_time  = self.start_time_dropdown.value
             selected_end_time    = self.end_time_dropdown.value
-            # selected_target      = self.target_dropdown.value
 
             filtered_df = self.df
 
@@ -589,9 +588,9 @@ class Query:
             if selected_end_date:
                 filtered_df = filtered_df[pd.to_datetime(filtered_df['date_time']).dt.date <= pd.to_datetime(selected_end_date).date()]
             if selected_start_time:
-                filtered_df = filtered_df[pd.to_datetime(filtered_df['time']).dt.time >= pd.to_datetime(selected_start_time).time()]
+                filtered_df = filtered_df[pd.to_datetime(filtered_df['time'], format='%H:%M:%S').dt.time >= pd.to_datetime(selected_start_time).time()]
             if selected_end_time:
-                filtered_df = filtered_df[pd.to_datetime(filtered_df['time']).dt.time <= pd.to_datetime(selected_end_time).time()]
+                filtered_df = filtered_df[pd.to_datetime(filtered_df['time'], format='%H:%M:%S').dt.time <= pd.to_datetime(selected_end_time).time()]
             
             # Filter the result based on polarimetric or spectroscopic mode
             if self.observation_mode_dropdown.value == False:
@@ -651,7 +650,7 @@ class Query:
 
 
         # Create an "Update" button
-        update_button = widgets.Button(description='Search Data')
+        update_button = widgets.Button(description='Search Targets')
         update_button.on_click(update_target_options)
 
         # Create a display button 
