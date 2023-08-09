@@ -1,8 +1,10 @@
 import pandas as pd
 from IPython.display import display, clear_output, Video
+from IPython.core.display import display, HTML
 import ipywidgets as widgets
 from pipmag.ads_utils import ADS_Search
 import os
+import datetime
 
 class MovieSelector:
     '''Class to create a widget to select a movie from a list of movies'''
@@ -522,3 +524,178 @@ class VideoSelector3:
         for column_name in self.column_names:
             display(self.value_texts[column_name])
         display(self.update_button)
+
+
+class Query: 
+    def __init__(self, df): 
+        self.df = df 
+        self.target_dropdown = None  # Initialize target_dropdown as None
+    
+    
+
+    def create_widget(self): 
+
+        # Create a dropdown widget for the instruments column (allows for several instruments to be selected)
+        self.instrument_dropdown = widgets.SelectMultiple(
+            options=self.df['instruments'].str.split(';').explode().str.strip().unique(),
+            description='Instrument(s):',
+            layout=widgets.Layout(width='300px')
+            # layout=widgets.Layout(width='300px', description_width='300px'), 
+            # HBox = widgets.HBox([widgets.Label('Select Instruments:'), self.instrument_dropdown])
+        )
+
+        # Create picker widgets for the start date, end date, start time, and end time 
+        self.start_date_dropdown = widgets.DatePicker(description='Start Date:', \
+            value=pd.to_datetime(self.df['date_time']).dt.date.min(), \
+                continuous_update=False)
+        self.end_date_dropdown   = widgets.DatePicker(description='End Date:'  , \
+            value=pd.to_datetime(self.df['date_time']).dt.date.max(), \
+                continuous_update=False)
+        self.start_time_dropdown = widgets.Text(      description='Start Time:', value='00:00'          )
+        self.end_time_dropdown   = widgets.Text(      description='End Time:'  , value='23:59'          )
+        
+        # Create a slider for spectroscopic or polarimetric mode selection 
+        self.observation_mode_dropdown = widgets.Dropdown(
+            options=['All', True, False],
+            description='Polarimetry:',
+            layout=widgets.Layout(width='200px', description_width='300px')
+        )
+
+        # Create a dropdown widget for target selection
+        self.target_dropdown = widgets.SelectMultiple(
+            options=[''] + self.df['target'].str.split(',').explode().str.strip().unique(),
+            description='Target(s):',
+            layout=widgets.Layout(width='300px')
+        )
+
+        # Function to update the filtered dates and targets based on instrument, start date, end date, start time, and end time selection
+        def update_target_options(change):
+            selected_instruments = self.instrument_dropdown.value
+            selected_start_date  = self.start_date_dropdown.value
+            selected_end_date    = self.end_date_dropdown.value
+            selected_start_time  = self.start_time_dropdown.value
+            selected_end_time    = self.end_time_dropdown.value
+
+            filtered_df = self.df
+
+            # Filter the result based on selected instruments 
+            if selected_instruments:
+                filtered_df = filtered_df[filtered_df['instruments'].apply(lambda x: any(item in selected_instruments for item in x.split(';')))]
+            
+            # Filter the result based on the selected start date, end date, start time, and end time
+            if selected_start_date:
+                filtered_df = filtered_df[pd.to_datetime(filtered_df['date_time']).dt.date >= pd.to_datetime(selected_start_date).date()]
+            if selected_end_date:
+                filtered_df = filtered_df[pd.to_datetime(filtered_df['date_time']).dt.date <= pd.to_datetime(selected_end_date).date()]
+            if selected_start_time:
+                filtered_df = filtered_df[pd.to_datetime(filtered_df['time'], format='%H:%M:%S').dt.time >= pd.to_datetime(selected_start_time).time()]
+            if selected_end_time:
+                filtered_df = filtered_df[pd.to_datetime(filtered_df['time'], format='%H:%M:%S').dt.time <= pd.to_datetime(selected_end_time).time()]
+            
+            # Filter the result based on polarimetric or spectroscopic mode
+            if self.observation_mode_dropdown.value == False:
+                filtered_df = filtered_df[filtered_df['polarimetry'] == False] # Spectroscopic mode
+            elif self.observation_mode_dropdown.value == True:
+                filtered_df = filtered_df[filtered_df['polarimetry'] == True]  # Polarimetric mode
+            elif self.observation_mode_dropdown == 'All':
+                pass
+
+            # Update the 'target' dropdown options based on the filtered DataFrame after the button is clicked
+            target_options = [''] + filtered_df['target'].str.split(',').explode().str.strip().dropna().unique()
+            self.target_dropdown.options = target_options
+
+            selected_target = self.target_dropdown.value
+
+            # Filter the result based on the selected targets
+            if 'None' not in selected_target:
+                # Combine selected targets with a regex OR '|' to search for any keyword
+                target_pattern = '|'.join(selected_target)
+                # Use str.contains() with the combined pattern
+                filtered_df = filtered_df[filtered_df['target'].str.contains(target_pattern)]
+
+            # Filter the result based on selected instruments
+            selected_instruments = self.instrument_dropdown.value
+            if selected_instruments:
+                filtered_df = filtered_df[filtered_df['instruments'].apply(lambda x: any(item in selected_instruments for item in x.split(';')))]
+
+            # Filter the result based on polarimetric or spectroscopic mode
+            if self.observation_mode_dropdown.value == False:
+                filtered_df = filtered_df[filtered_df['polarimetry'] == False]  # Spectroscopic mode
+            elif self.observation_mode_dropdown.value == True:
+                filtered_df = filtered_df[filtered_df['polarimetry'] == True]  # Polarimetric mode
+            elif self.observation_mode_dropdown.value == 'All':
+                pass
+
+            # Store the filtered DataFrame in an instance variable
+            self.filtered_df = filtered_df
+
+
+        def update_targets(change):
+            update_target_options(change)
+
+            # Start with the filtered DataFrame from update_target_options
+            filtered_df = self.filtered_df.copy()
+
+            # Store the filtered DataFrame in an instance variable
+            self.filtered_df = filtered_df
+
+            # Display the resulting DataFrame
+            with output:
+                clear_output(wait=True)
+                display_df = filtered_df[['date_time', 'instruments', 'target', 'comments', 'polarimetry']].copy()
+                display_df['video_link'] = filtered_df['video_links'].str.split(';').str[0]  # Extract the first link
+                display_df['video_link'] = display_df['video_link'].apply(
+                    lambda x: f'<a href="{x}" target="_blank">Video Link</a>' if pd.notnull(x) else '')  # Convert to clickable link
+                display(HTML(display_df.to_html(escape=False)))
+
+
+        # Create an "Update" button
+        update_button = widgets.Button(description='Search Targets')
+        update_button.on_click(update_target_options)
+
+        # Create a display button 
+        display_button = widgets.Button(description='Display Data')
+        display_button.on_click(update_targets)
+
+        # Create an output widget to display the resulting DataFrame
+        output = widgets.Output()
+
+        # Create a "Save Data" button
+        save_button = widgets.Button(description='Save Data')
+        save_button.on_click(self.save_filtered_data)  # Call save_filtered_data method when button is clicked
+
+        # Display the instrument, start date, end date, start time, end time, target widgets, and output widget
+        display(self.instrument_dropdown)
+        display(self.start_date_dropdown)
+        display(self.end_date_dropdown)
+        display(self.start_time_dropdown)
+        display(self.end_time_dropdown)
+        display(self.observation_mode_dropdown)
+        display(update_button)                  # Display the "Update" button
+        display(self.target_dropdown)
+        display(display_button)                 # Display the "Display Data" button
+        display(output)
+        display(save_button)                    # Display the "Save Data" button
+    
+    def save_filtered_data(self, _):
+
+        df_copy = self.filtered_df.copy()
+
+        if df_copy is not None and not df_copy.empty:
+            # List of columns to convert from lists to strings
+            columns_to_convert = ['links', 'video_links', 'image_links', 'instruments']
+            # for col in columns_to_convert:
+            #     df_copy[col] = df_copy[col].apply(lambda x: ';'.join(x))
+            
+            # Convert lists to strings with ';' as the separator
+            for col in ['instruments', 'target']:
+                df_copy[col] = df_copy[col].apply(lambda x: ';'.join(x) if isinstance(x, list) else x)
+
+
+            file_path = f'../data/la_palma_query.csv'
+
+            
+            df_copy.to_csv(file_path, index=False)
+            print(f"Filtered DataFrame saved to {file_path}.")
+        else:
+            print("No filtered DataFrame available. Please make a query first.")
