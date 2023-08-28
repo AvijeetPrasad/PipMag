@@ -271,13 +271,19 @@ class VideoSelector2:
                 self.df['month'] == month) & (self.df['day'] == day)]['time'].unique()
             self.time_dropdown.options = time
 
-        # Function to update the links dropdown based on the selected time
+        # Function to update the links dropdown based on the selected time, day, month, and year
         def update_links(change):
+            year = self.year_dropdown.value
+            month = self.month_dropdown.value
+            day = self.day_dropdown.value
             time = change.new
-            links = list(self.df[self.df['time'] == time]
-                         ['video_links'].values[0])
+            selected_datetime = pd.Timestamp(year=year, month=month, day=day, hour=int(time.split(':')[0]), minute=int(time.split(':')[1]), second=int(time.split(':')[2]))
+
+            links = list(self.df[self.df['date_time'] == selected_datetime]['video_links'].values[0])
+
             # Create a list of the link names (without the full path)
             options = [os.path.basename(link) for link in links]
+
             # Store the full path of the links in a variable
             self.links_full_name = links
             self.links_dropdown.options = options
