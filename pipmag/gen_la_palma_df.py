@@ -20,7 +20,7 @@ def load_or_fetch_links():
     """
     Load media links from file if it exists; otherwise, fetch the links.
     """
-    # Check if media_links.pkl exists then load the pickle file, otherwise get the links
+    # Check if MEDIA_LINKS_FILE exists then load the file, otherwise get the links
     if os.path.isfile(MEDIA_LINKS_FILE):
         links_df = pd.read_csv(MEDIA_LINKS_FILE)
         all_media_links = links_df['Links'].tolist()
