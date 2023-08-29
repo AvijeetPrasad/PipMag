@@ -603,11 +603,11 @@ class Query:
                     filtered_df['time'], format='%H:%M:%S').dt.time <= pd.to_datetime(selected_end_time).time()]
 
             # Filter the result based on polarimetric or spectroscopic mode
-            if self.observation_mode_dropdown.value == False:
-                filtered_df = filtered_df[filtered_df['polarimetry'] == False]  # Spectroscopic mode
-            elif self.observation_mode_dropdown.value == True:
-                filtered_df = filtered_df[filtered_df['polarimetry'] == True]  # Polarimetric mode
-            elif self.observation_mode_dropdown == 'All':
+            if not self.observation_mode_dropdown.value:
+                filtered_df = filtered_df[filtered_df['polarimetry'].eq(False)]  # Spectroscopic mode
+            elif self.observation_mode_dropdown.value:
+                filtered_df = filtered_df[filtered_df['polarimetry'].eq(True)]  # Polarimetric mode
+            elif self.observation_mode_dropdown.value == 'All':
                 pass
 
             # Update the 'target' dropdown options based on the filtered DataFrame after the button is clicked
@@ -630,10 +630,10 @@ class Query:
                     lambda x: any(item in selected_instruments for item in x.split(';')))]
 
             # Filter the result based on polarimetric or spectroscopic mode
-            if self.observation_mode_dropdown.value == False:
-                filtered_df = filtered_df[filtered_df['polarimetry'] == False]  # Spectroscopic mode
-            elif self.observation_mode_dropdown.value == True:
-                filtered_df = filtered_df[filtered_df['polarimetry'] == True]  # Polarimetric mode
+            if not self.observation_mode_dropdown.value:
+                filtered_df = filtered_df[filtered_df['polarimetry'].eq(False)]  # Spectroscopic mode
+            elif self.observation_mode_dropdown.value is True:
+                filtered_df = filtered_df[filtered_df['polarimetry'].eq(True)]  # Polarimetric mode
             elif self.observation_mode_dropdown.value == 'All':
                 pass
 
@@ -654,8 +654,9 @@ class Query:
                 clear_output(wait=True)
                 display_df = filtered_df[['date_time', 'instruments', 'target', 'comments', 'polarimetry']].copy()
                 display_df['video_link'] = filtered_df['video_links'].str.split(';').str[0]  # Extract the first link
+                # Convert to clickable links
                 display_df['video_link'] = display_df['video_link'].apply(
-                    lambda x: f'<a href="{x}" target="_blank">Video Link</a>' if pd.notnull(x) else '')  # Convert to clickable link
+                    lambda x: f'<a href="{x}" target="_blank">Video Link</a>' if pd.notnull(x) else '')
                 display(HTML(display_df.to_html(escape=False)))
 
         # Create an "Update" button
