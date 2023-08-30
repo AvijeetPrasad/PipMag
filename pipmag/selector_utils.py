@@ -249,7 +249,7 @@ class VideoSelector2:
             self.value_texts[column_name] = widgets.Text(
                 description=f'{column_name}:')
         self.update_button = widgets.Button(description='Update')
-
+        
         # Initialize the year dropdown with default value if only one year exists
         if len(self.df['year'].unique()) == 1:
             self.year_dropdown.value = self.df['year'].unique()[0]
@@ -262,21 +262,23 @@ class VideoSelector2:
                 days = self.df[(self.df['year'] == self.year_dropdown.value) & (
                                self.df['month'] == self.month_dropdown.value)]['day'].unique()
                 self.day_dropdown.options = days
-            # If only one date exists, initialize the day dropdown too
-            if len(days) == 1:
-                self.day_dropdown.value = days[0]
-                times = self.df[(self.df['year'] == self.year_dropdown.value) & (
-                                self.df['month'] == self.month_dropdown.value) & (
-                                self.df['day'] == self.day_dropdown.value)]['time'].unique()
-                self.time_dropdown.options = times
-            # If only one time exists, initialize the time dropdown too
-            if len(times) == 1:
-                self.time_dropdown.value = times[0]
-                links = list(self.df[(self.df['year'] == self.year_dropdown.value) & (
-                    self.df['month'] == self.month_dropdown.value) & (
-                    self.df['day'] == self.day_dropdown.value) & (
-                    self.df['time'] == self.time_dropdown.value)]['video_links'].values[0])
-                self.links_dropdown.options = links
+                
+                # If only one date exists, initialize the day dropdown too
+                if len(days) == 1:
+                    self.day_dropdown.value = days[0]
+                    times = self.df[(self.df['year'] == self.year_dropdown.value) & (
+                                    self.df['month'] == self.month_dropdown.value) & (
+                                    self.df['day'] == self.day_dropdown.value)]['time'].unique()
+                    self.time_dropdown.options = times
+                    
+                    # If only one time exists, initialize the time dropdown too
+                    if len(times) == 1:
+                        self.time_dropdown.value = times[0]
+                        links = list(self.df[(self.df['year'] == self.year_dropdown.value) & (
+                            self.df['month'] == self.month_dropdown.value) & (
+                            self.df['day'] == self.day_dropdown.value) & (
+                            self.df['time'] == self.time_dropdown.value)]['video_links'].values[0])
+                        self.links_dropdown.options = links
 
         # Initialize all dropdowns if only one entry in the DataFrame
         if len(self.df) == 1:
