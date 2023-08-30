@@ -215,8 +215,11 @@ class VideoSelector2:
     def __init__(self, df, column_names):
         self.df = df
         self.column_names = column_names
+        self.selected_index = None
+        self.links_full_name = []
 
     def create_widget(self):
+
         # Create a dropdown widget for the year column
         self.year_dropdown = widgets.Dropdown(
             options=self.df['year'].unique(), description='Year:')
@@ -246,6 +249,54 @@ class VideoSelector2:
             self.value_texts[column_name] = widgets.Text(
                 description=f'{column_name}:')
         self.update_button = widgets.Button(description='Update')
+        
+        # Initialize the year dropdown with default value if only one year exists
+        if len(self.df['year'].unique()) == 1:
+            self.year_dropdown.value = self.df['year'].unique()[0]
+            months = self.df[self.df['year'] == self.year_dropdown.value]['month'].unique()
+            self.month_dropdown.options = months
+
+            # If only one month exists, initialize the month dropdown too
+            if len(months) == 1:
+                self.month_dropdown.value = months[0]
+                days = self.df[(self.df['year'] == self.year_dropdown.value) & (
+                               self.df['month'] == self.month_dropdown.value)]['day'].unique()
+                self.day_dropdown.options = days
+                
+                # If only one date exists, initialize the day dropdown too
+                if len(days) == 1:
+                    self.day_dropdown.value = days[0]
+                    times = self.df[(self.df['year'] == self.year_dropdown.value) & (
+                                    self.df['month'] == self.month_dropdown.value) & (
+                                    self.df['day'] == self.day_dropdown.value)]['time'].unique()
+                    self.time_dropdown.options = times
+                    
+                    # If only one time exists, initialize the time dropdown too
+                    if len(times) == 1:
+                        self.time_dropdown.value = times[0]
+                        links = list(self.df[(self.df['year'] == self.year_dropdown.value) & (
+                            self.df['month'] == self.month_dropdown.value) & (
+                            self.df['day'] == self.day_dropdown.value) & (
+                            self.df['time'] == self.time_dropdown.value)]['video_links'].values[0])
+                        self.links_dropdown.options = links
+
+        # Initialize all dropdowns if only one entry in the DataFrame
+        if len(self.df) == 1:
+            single_row = self.df.iloc[0]
+            self.year_dropdown.value = single_row['year']
+            self.month_dropdown.options = [single_row['month']]
+            self.month_dropdown.value = single_row['month']
+            self.day_dropdown.options = [single_row['day']]
+            self.day_dropdown.value = single_row['day']
+            self.time_dropdown.options = [single_row['time']]
+            self.time_dropdown.value = single_row['time']
+
+            # Handle multiple links
+            self.links_dropdown.options = list(single_row['video_links'])
+            self.links_dropdown.value = single_row['video_links'][0] if single_row['video_links'] else None
+            self.selected_link = self.links_dropdown.value
+            self.links_full_name = list(single_row['video_links'])  # Make sure to set this!
+            self.selected_index = 0  # Since there's only one row, the index is 0
 
         # Function to update the month dropdown based on the selected year
         def update_months(change):
@@ -297,6 +348,11 @@ class VideoSelector2:
 
             self.matches = self.df[self.df['video_links'].apply(
                 lambda x: self.selected_link in x)]
+
+            if self.matches.empty:  # Check for an empty DataFrame
+                self.selected_index = None
+                print("No matches found for the selected link.")
+                return
             self.selected_index = self.matches.index[0]
 
         # Function to display the selected link when the display button is pressed

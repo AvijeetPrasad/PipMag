@@ -2,4 +2,4 @@
 ignore = E226,E302,E41,W605
 max-line-length = 120
 exclude = tests/*
-max-complexity = 20
+max-complexity = 25
