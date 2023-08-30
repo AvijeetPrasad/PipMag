@@ -2,7 +2,7 @@ import unittest
 import os
 import pandas as pd
 import tempfile
-from pipmag.file_utils import read_and_format_csv
+from pipmag.file_utils import read_and_format_csv, preprocess_and_save_dataframe
 
 class TestReadAndFormatCSV(unittest.TestCase):
 
