@@ -277,3 +277,64 @@ def read_and_format_csv(file_path, expected_columns=None):
     df['polarimetry'] = df['polarimetry'].apply(lambda x: str(x))
 
     return df
+
+
+def preprocess_and_save_dataframe(df, la_palma_obs_data_file):
+    """
+    Preprocesses the input DataFrame and saves it as a .csv file.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Input DataFrame containing observational data columns such as 'target', 'links', 'video_links', 'image_links',
+        and 'instruments'.
+    la_palma_obs_data_file : str
+        File path where the preprocessed DataFrame will be saved as a .csv file.
+
+    Returns
+    -------
+    None
+        The function saves the preprocessed DataFrame as a .csv file and does not return any value.
+
+    Dependencies
+    ------------
+    pandas as pd
+
+    Notes
+    -----
+    Function Name: preprocess_and_save_dataframe
+    This function performs the following preprocessing steps:
+    1. Rewrites specific keywords in the 'target' column to a standardized format.
+    2. Converts lists in certain columns to semi-colon separated strings.
+    3. Saves the preprocessed DataFrame to a .csv file.
+
+    Examples
+    --------
+    >>> preprocess_and_save_dataframe(df, "path/to/save/file.csv")
+    The DataFrame `df` will be preprocessed and saved at "path/to/save/file.csv".
+    """
+
+    def rewrite_keywords(text, target_keywords, replace_with):
+        for keyword in target_keywords:
+            if keyword in text:
+                text = text.replace(keyword, replace_with)
+        return text
+
+    ACTIVE_REGION_KEYWORDS = {'active region', 'Active region', 'AR'}
+    QUIET_SUN_KEYWORDS = {'quiet Sun', 'quiet sun', 'QS', 'Quiet sun'}
+    SUNSPOT_KEYWORDS = {'sunspot', 'Sunspot', 'SS', 'ss', 'SUnspot'}
+
+    df['target'] = df['target'].apply(lambda x: None if pd.isna(
+        x) else rewrite_keywords(x, ACTIVE_REGION_KEYWORDS, "Active Region"))
+    df['target'] = df['target'].apply(lambda x: None if pd.isna(
+        x) else rewrite_keywords(x, QUIET_SUN_KEYWORDS, "Quiet Sun"))
+    df['target'] = df['target'].apply(lambda x: None if pd.isna(
+        x) else rewrite_keywords(x, SUNSPOT_KEYWORDS, "Sunspot"))
+
+    df_copy = df.copy()
+
+    columns_to_convert = ['links', 'video_links', 'image_links', 'instruments']
+    for col in columns_to_convert:
+        df_copy[col] = df_copy[col].apply(lambda x: ';'.join(x))
+
+    df_copy.to_csv(la_palma_obs_data_file, index=False)

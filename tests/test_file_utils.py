@@ -43,3 +43,34 @@ class TestReadAndFormatCSV(unittest.TestCase):
         self.assertTrue(pd.to_datetime("2013-06-30 09:15:50") == df['date_time'][0])
         self.assertTrue(df['instruments'][0] == ['CRISP', 'IRIS'])
         self.assertTrue(df['polarimetry'][0] == 'False')
+
+
+class TestPreprocessAndSaveDataFrame(unittest.TestCase):
+    
+    def setUp(self):
+        self.sample_data = {
+            'target': ['active region', 'QS', 'sunspot', 'AR', 'Quiet sun'],
+            'links': [['a'], ['b'], ['c'], ['d'], ['e']],
+            'video_links': [['f'], ['g'], ['h'], ['i'], ['j']],
+            'image_links': [['k'], ['l'], ['m'], ['n'], ['o']],
+            'instruments': [['p'], ['q'], ['r'], ['s'], ['t']]
+        }
+        self.df = pd.DataFrame(self.sample_data)
+        self.output_file = "test_output.csv"
+        
+    def test_preprocess_and_save_dataframe(self):
+        preprocess_and_save_dataframe(self.df, self.output_file)
+        
+        # Read the saved CSV and check its content
+        df_read = pd.read_csv(self.output_file)
+        
+        self.assertEqual(df_read['target'][0], 'Active Region')
+        self.assertEqual(df_read['target'][1], 'Quiet Sun')
+        self.assertEqual(df_read['target'][2], 'Sunspot')
+        self.assertEqual(df_read['links'][0], 'a')
+        
+        # Clean up
+        os.remove(self.output_file)
+
+if __name__ == '__main__':
+    unittest.main()
