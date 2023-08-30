@@ -3,6 +3,8 @@ import os
 import pandas as pd
 import tempfile
 from pipmag.file_utils import read_and_format_csv, preprocess_and_save_dataframe
+from pipmag.file_utils import read_and_format_csv_for_query
+
 
 class TestReadAndFormatCSV(unittest.TestCase):
 
@@ -71,6 +73,36 @@ class TestPreprocessAndSaveDataFrame(unittest.TestCase):
         
         # Clean up
         os.remove(self.output_file)
+
+class TestReadAndFormatCSV(unittest.TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        # Create a temporary file
+        cls.temp_file = tempfile.NamedTemporaryFile(mode='w+', delete=False)
+        
+        # Sample data
+        data = """date_time,year,month,day,time,instruments,target,comments,video_links,image_links,links,num_links,polarimetry
+2022-07-01 09:46:53,2022,7,1,09:46:53,CRISP;   CHROMIS,"Active Region, Sunspot",AR13040,http://video.com,http://image.com,http://link.com,50,True
+2022-07-01 10:46:53,2022,7,1,10:46:53,CRISP;   CHROMIS,,,"""
+        
+        # Write sample data to the temporary file and close it
+        cls.temp_file.write(data)
+        cls.temp_file.close()
+
+    def test_read_and_format_csv_for_query(self):
+        # Read and format the CSV file
+        df = read_and_format_csv_for_query(self.temp_file.name)
+        
+        # Validate the DataFrame
+        self.assertEqual(df.shape, (2, 13))  # Should have 2 rows and 13 columns
+        self.assertEqual(df.loc[0, 'target'], 'Active Region, Sunspot')  # First row, 'target' column should be 'Active Region, Sunspot'
+        self.assertEqual(df.loc[1, 'target'], 'None')  # Second row, 'target' column should be None
+
+    @classmethod
+    def tearDownClass(cls):
+        # Delete the temporary file
+        os.remove(cls.temp_file.name)
 
 if __name__ == '__main__':
     unittest.main()

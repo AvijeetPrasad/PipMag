@@ -338,3 +338,45 @@ def preprocess_and_save_dataframe(df, la_palma_obs_data_file):
         df_copy[col] = df_copy[col].apply(lambda x: ';'.join(x))
 
     df_copy.to_csv(la_palma_obs_data_file, index=False)
+
+
+def read_and_format_csv_for_query(file_path):
+    """
+    Reads a CSV file into a pandas DataFrame and converts specific columns' NaN values to 'None'.
+
+    Parameters
+    ----------
+    file_path : str
+        The path to the CSV file to be read.
+
+    Returns
+    -------
+    pandas.DataFrame
+        A DataFrame with NaN values in specified columns replaced with 'None'.
+
+    Dependencies
+    ------------
+    pandas
+
+    Notes
+    -----
+    Function Name: read_and_format_csv_for_query
+    This function is specifically designed to prepare DataFrames for querying,
+    by replacing NaN values in selected columns with 'None'.
+
+    Examples
+    --------
+    >>> read_and_format_csv_for_query("path/to/csv/file.csv")
+    DataFrame with NaNs in 'comments', 'polarimetry', and 'target' columns replaced by 'None'.
+    """
+
+    df = pd.read_csv(file_path)
+
+    # List of columns to convert from NaN to None
+    columns_to_convert = ['comments', 'polarimetry', 'target']
+
+    # Convert the NaNs in each column back to None
+    for col in columns_to_convert:
+        df[col] = df[col].apply(lambda x: 'None' if pd.isna(x) else x)
+
+    return df
