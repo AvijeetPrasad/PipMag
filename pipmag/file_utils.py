@@ -2,6 +2,7 @@ import pickle
 from datetime import datetime
 import glob
 import os
+import pandas as pd
 
 def add_timestamp(file_name):
     """
@@ -195,3 +196,84 @@ def load_pickle(filename):
         data = pickle.load(f)
     print(f'loaded {filename} successfully')
     return data
+
+def read_and_format_csv(file_path, expected_columns=None):
+    """
+    Reads a CSV file into a DataFrame and formats specified columns.
+    The function includes both error handling and type checking.
+
+    Parameters
+    ----------
+    file_path : str
+        The path to the CSV file that is to be read.
+    expected_columns : list, optional
+        A list of column names that are expected to be in the DataFrame.
+        The default is None, which skips the column check.
+
+    Returns
+    -------
+    pd.DataFrame or str
+        Returns a formatted DataFrame if the file reading and formatting are successful.
+        Otherwise, returns an error message.
+
+    Dependencies
+    ------------
+    pandas as pd
+
+    Notes
+    -----
+    Function Name: read_and_format_csv
+    The function reads a CSV file into a DataFrame and applies several formatting operations.
+    These include converting the 'date_time' column to datetime format,
+    converting specified columns from strings to lists, replacing NaN values with None in specified columns,
+    and converting the 'polarimetry' column to a string.
+
+    The function expects the CSV file to have the following format:
+    ```
+    date_time,year,month,day,time,instruments,target,comments,video_links,image_links,links,num_links,polarimetry
+    2013-06-30 09:15:50,2013,6,30,09:15:50,CRISP; IRIS,Spicules,
+    ,http://example.com/video,http://example.com/image,http://example.com/links,3,False
+    ```
+
+    Examples
+    --------
+    >>> read_and_format_csv('sample.csv', expected_columns=['date_time', 'year', 'month'])
+    Returns a DataFrame with the specified formatting if the file and columns are valid.
+    """
+
+    try:
+        # Read the DataFrame from the CSV file
+        df = pd.read_csv(file_path)
+    except FileNotFoundError:
+        return "Error: The specified file was not found."
+    except pd.errors.EmptyDataError:
+        return "Error: The file is empty."
+    except pd.errors.ParserError:
+        return "Error: The file could not be parsed."
+
+    # Check if the DataFrame has the expected columns
+    if expected_columns:
+        if not set(expected_columns).issubset(set(df.columns)):
+            return f"Error: Missing expected columns. Expected: {expected_columns}, Found: {list(df.columns)}"
+
+    # Convert the 'date_time' column to datetime format
+    df['date_time'] = pd.to_datetime(df['date_time'])
+
+    # Columns to convert from strings to lists
+    list_columns = ['links', 'video_links', 'image_links', 'instruments']
+
+    # Convert the strings in each column to lists
+    for col in list_columns:
+        df[col] = df[col].apply(lambda x: x.split(';') if isinstance(x, str) else [])
+
+    # Columns to convert from NaN to None
+    nan_to_none_columns = ['comments', 'polarimetry', 'target']
+
+    # Convert the NaNs in each column to None
+    for col in nan_to_none_columns:
+        df[col] = df[col].apply(lambda x: None if pd.isna(x) else x)
+
+    # Convert the 'polarimetry' column to string format
+    df['polarimetry'] = df['polarimetry'].apply(lambda x: str(x))
+
+    return df
