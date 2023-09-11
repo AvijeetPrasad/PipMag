@@ -592,6 +592,11 @@ class VideoSelector3:
         display(self.update_button)
 
 
+
+
+
+
+
 class Query:
     def __init__(self, df):
         self.df = df
@@ -643,10 +648,12 @@ class Query:
 
             filtered_df = self.df
 
+
             # Filter the result based on selected instruments
             if selected_instruments:
                 filtered_df = filtered_df[filtered_df['instruments'].apply(
-                    lambda x: any(item in selected_instruments for item in x.split(';')))]
+                    # lambda x: any(item in selected_instruments for item in x.split(';')))] # any
+                    lambda x: all(item in x.split(';') for item in selected_instruments))] # all
 
             # Filter the result based on the selected start date, end date, start time, and end time
             if selected_start_date:
@@ -663,9 +670,9 @@ class Query:
                     filtered_df['time'], format='%H:%M:%S').dt.time <= pd.to_datetime(selected_end_time).time()]
 
             # Filter the result based on polarimetric or spectroscopic mode
-            if not self.observation_mode_dropdown.value:
+            if self.observation_mode_dropdown.value is False:
                 filtered_df = filtered_df[filtered_df['polarimetry'].eq(False)]  # Spectroscopic mode
-            elif self.observation_mode_dropdown.value:
+            elif self.observation_mode_dropdown.value is True:
                 filtered_df = filtered_df[filtered_df['polarimetry'].eq(True)]  # Polarimetric mode
             elif self.observation_mode_dropdown.value == 'All':
                 pass
