@@ -249,7 +249,7 @@ class VideoSelector2:
             self.value_texts[column_name] = widgets.Text(
                 description=f'{column_name}:')
         self.update_button = widgets.Button(description='Update')
-        
+
         # Initialize the year dropdown with default value if only one year exists
         if len(self.df['year'].unique()) == 1:
             self.year_dropdown.value = self.df['year'].unique()[0]
@@ -262,7 +262,7 @@ class VideoSelector2:
                 days = self.df[(self.df['year'] == self.year_dropdown.value) & (
                                self.df['month'] == self.month_dropdown.value)]['day'].unique()
                 self.day_dropdown.options = days
-                
+
                 # If only one date exists, initialize the day dropdown too
                 if len(days) == 1:
                     self.day_dropdown.value = days[0]
@@ -270,7 +270,7 @@ class VideoSelector2:
                                     self.df['month'] == self.month_dropdown.value) & (
                                     self.df['day'] == self.day_dropdown.value)]['time'].unique()
                     self.time_dropdown.options = times
-                    
+
                     # If only one time exists, initialize the time dropdown too
                     if len(times) == 1:
                         self.time_dropdown.value = times[0]
@@ -337,23 +337,27 @@ class VideoSelector2:
 
             # Store the full path of the links in a variable
             self.links_full_name = links
-            self.links_dropdown.options = options
+            self.links_dropdown.options = options if links else ['No Video Links']
 
         # Function to update the selected link when the links dropdown value changes
         def links_value_changed(change):
-            # Get the index of the selected link
-            index = self.links_dropdown.options.index(change.new)
-            # Get the full path of the selected link
-            self.selected_link = self.links_full_name[index]
+            if self.links_full_name:  # Check if links_full_name is not empty
+                # Get the index of the selected link
+                index = self.links_dropdown.options.index(change.new)
+                # Get the full path of the selected link
+                self.selected_link = self.links_full_name[index]
 
-            self.matches = self.df[self.df['video_links'].apply(
-                lambda x: self.selected_link in x)]
+                self.matches = self.df[self.df['video_links'].apply(
+                    lambda x: self.selected_link in x)]
 
-            if self.matches.empty:  # Check for an empty DataFrame
+                if self.matches.empty:  # Check for an empty DataFrame
+                    self.selected_index = None
+                    print("No matches found for the selected link.")
+                    return
+                self.selected_index = self.matches.index[0]
+            else:
+                self.selected_link = ''
                 self.selected_index = None
-                print("No matches found for the selected link.")
-                return
-            self.selected_index = self.matches.index[0]
 
         # Function to display the selected link when the display button is pressed
         def display_selected_link(b):
