@@ -592,11 +592,6 @@ class VideoSelector3:
         display(self.update_button)
 
 
-
-
-
-
-
 class Query:
     def __init__(self, df):
         self.df = df
@@ -648,12 +643,11 @@ class Query:
 
             filtered_df = self.df
 
-
             # Filter the result based on selected instruments
             if selected_instruments:
                 filtered_df = filtered_df[filtered_df['instruments'].apply(
                     # lambda x: any(item in selected_instruments for item in x.split(';')))] # any
-                    lambda x: all(item in x.split(';') for item in selected_instruments))] # all
+                    lambda x: all(item in x.split(';') for item in selected_instruments))]  # all
 
             # Filter the result based on the selected start date, end date, start time, and end time
             if selected_start_date:
