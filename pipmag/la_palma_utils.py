@@ -4,6 +4,8 @@ import os
 import pandas as pd
 import re
 import requests
+from pandas import DataFrame, to_datetime
+from datetime import timedelta
 
 
 def get_obs_years(la_palma_url='http://tsih3.uio.no/lapalma/', verbose=False):
@@ -1226,3 +1228,113 @@ def generate_dataframe(date_time_from_all_media_links, all_media_links_with_date
         df.loc[df['date_time'] == dt, 'polarimetry'] = [polarimetry_status]
 
     return df
+
+
+def fix_duplicate_times(df: DataFrame, TIME_DIFF_THRESHOLD_SECONDS: int = 60) -> DataFrame:
+    """
+    Fix duplicate times in DataFrame by grouping rows based on time proximity.
+
+    Parameters
+    ----------
+    df : DataFrame
+        The DataFrame containing media observation details.
+    TIME_DIFF_THRESHOLD_SECONDS : int, optional
+        Time difference threshold in seconds. Default is 60.
+
+    Returns
+    -------
+    DataFrame
+        A new DataFrame where rows with similar 'date_time' values are grouped.
+
+    Notes
+    -----
+    Function Name: fix_duplicate_times
+    This function converts the 'date_time' column to DateTime objects and sorts the DataFrame.
+    It then groups the DataFrame based on time proximity and aggregates each column.
+    Duplicates in the 'instruments' and 'polarimetry' columns are removed.
+    """
+
+    # Convert 'date_time' column to DateTime type and sort DataFrame by 'date_time'
+    df['date_time'] = to_datetime(df['date_time'])
+    sorted_df = df.sort_values('date_time')
+
+    # Define threshold for time difference
+    threshold = timedelta(seconds=TIME_DIFF_THRESHOLD_SECONDS)
+
+    # Group rows based on time proximity
+    grouped_df = sorted_df.groupby((sorted_df['date_time'].diff() > threshold).cumsum()).agg({
+        'date_time': 'first',
+        'instruments': lambda x: list(set(item for sublist in x for item in sublist)),
+        'targets': 'first',
+        'comments': 'first',
+        'video_links': lambda x: list(set(item for sublist in x for item in sublist)),
+        'image_links': lambda x: list(set(item for sublist in x for item in sublist)),
+        'polarimetry': lambda x: any(item for item in x)
+    })
+
+    # Convert 'date_time' column back to native Python datetime
+    grouped_df['date_time'] = grouped_df['date_time'].apply(lambda x: x.to_pydatetime())
+
+    return grouped_df
+
+def add_existing_and_new_dataframes(new_df: pd.DataFrame,
+                                    LA_PALMA_OBS_DATA_FILE: str = 'la_palma_obs_data.csv') -> pd.DataFrame:
+    """
+    Add a potential new DataFrame to the old DataFrame file without losing any data.
+
+    Parameters
+    ----------
+    new_df : pd.DataFrame
+        New DataFrame containing media observation details.
+    LA_PALMA_OBS_DATA_FILE : str, optional
+        File name of the existing DataFrame CSV file. Default is 'la_palma_obs_data.csv'.
+
+    Returns
+    -------
+    pd.DataFrame
+        A DataFrame containing the merged data.
+
+    Notes
+    -----
+    Function Name: add_existing_and_new_dataframes
+    This function loads an existing DataFrame from a CSV file, performs necessary data type conversions,
+    and then concatenates it with the new DataFrame. Duplicates, if any, are removed.
+    """
+
+    # Load the existing CSV file as a DataFrame
+    try:
+        existing_df = pd.read_csv(LA_PALMA_OBS_DATA_FILE)
+    except FileNotFoundError:
+        print(f"File {LA_PALMA_OBS_DATA_FILE} not found. Creating a new DataFrame.")
+        return new_df
+
+    # Convert 'date_time' column to DateTime type
+    existing_df['date_time'] = pd.to_datetime(existing_df['date_time'])
+    new_df['date_time'] = pd.to_datetime(new_df['date_time'])
+
+    # List of columns to convert from strings to lists
+    columns_to_convert = ['video_links', 'image_links', 'instruments']
+
+    # Convert the strings in each column back to lists
+    for col in columns_to_convert:
+        existing_df[col] = existing_df[col].apply(lambda x: x.split(';') if isinstance(x, str) else [])
+        new_df[col] = new_df[col].apply(lambda x: x.split(';') if isinstance(x, str) else [])
+
+    # List of columns to convert from NaN to None
+    columns_to_convert = ['comments', 'polarimetry', 'targets']
+
+    # Convert the NaNs in each column back to None
+    for col in columns_to_convert:
+        existing_df[col] = existing_df[col].apply(lambda x: None if pd.isna(x) else x)
+        new_df[col] = new_df[col].apply(lambda x: None if pd.isna(x) else x)
+
+    # Concatenate the existing DataFrame and the new DataFrame
+    combined_df = pd.concat([existing_df, new_df])
+
+    # Remove duplicates based on 'date_time'
+    combined_df.drop_duplicates(subset=['date_time'], inplace=True, keep='first')
+
+    # Optionally, you can save the combined DataFrame back to the CSV
+    # combined_df.to_csv(LA_PALMA_OBS_DATA_FILE, index=False)
+
+    return combined_df
