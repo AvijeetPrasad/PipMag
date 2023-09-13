@@ -1,8 +1,9 @@
-import requests
 from bs4 import BeautifulSoup
-import re
 from datetime import datetime
+import os
 import pandas as pd
+import re
+import requests
 
 
 def get_obs_years(la_palma_url='http://tsih3.uio.no/lapalma/', verbose=False):
@@ -418,6 +419,78 @@ def get_all_links(links):
     print(f'total number of links: {len(all_links_sorted)}')
     return all_links_sorted
 
+
+def load_or_fetch_links(reload=False, MEDIA_LINKS_FILE='all_media_links.csv'):
+    """
+    Load media links from a specified file if it exists; otherwise, fetch the links from La Palma website.
+
+    Parameters
+    ----------
+    reload : bool, optional
+        Flag to indicate whether to reload the media links from the La Palma website. Default is False.
+    MEDIA_LINKS_FILE : str, optional
+        The name of the CSV file where media links are saved. Default is 'all_media_links.csv'.
+
+    Returns
+    -------
+    list
+        List of all media links either loaded from the file or fetched from the website.
+
+    Dependencies
+    ------------
+    os
+    pandas
+    get_obs_years
+    get_obs_dates
+    get_video_links
+    get_image_links
+    get_all_links
+
+    Notes
+    -----
+    Function Name: load_or_fetch_links
+    The function checks for the existence of the MEDIA_LINKS_FILE.
+    If the file exists and the reload flag is False,
+    the function reads the file to load the media links.
+    Otherwise, it fetches the media links from the La Palma website,
+    sorts them, and saves them to the specified file.
+
+    Examples
+    --------
+    >>> load_or_fetch_links()
+    ['link1', 'link2', 'link3']
+
+    >>> load_or_fetch_links(reload=True)
+    ['new_link1', 'new_link2', 'new_link3']
+    """
+
+    # Check if MEDIA_LINKS_FILE exists then load the file, otherwise get the links
+    if os.path.isfile(MEDIA_LINKS_FILE) and not reload:
+        links_df = pd.read_csv(MEDIA_LINKS_FILE)
+        all_media_links = links_df['Links'].tolist()
+    else:
+        print('Fetching links from La Palma website...')
+        # Fetch observation years and dates
+        obs_years = get_obs_years()
+        obs_dates = get_obs_dates(obs_years)
+
+        # Get video and image links for each observation date
+        video_links = get_video_liks(obs_dates)
+        image_links = get_image_links(obs_dates)
+
+        # Get all video and image links
+        all_video_links = get_all_links(video_links)
+        all_image_links = get_all_links(image_links)
+
+        # Combine and sort all media links
+        all_media_links = sorted(all_image_links + all_video_links)
+
+        # Save media links to file
+        links_df = pd.DataFrame(all_media_links, columns=['Links'])
+        links_df.to_csv(MEDIA_LINKS_FILE, index=False)
+
+    return all_media_links
+
 def get_date_time_from_link(link,
                             pattern=r'(\d{4}-\d{2}-\d{2})_(\d{2}:\d{2}:\d{2})'):
     """
@@ -679,6 +752,59 @@ def get_invalid_dates(
         print(f"Invalid dates: {invalid_dates}")
     return invalid_dates
 
+def preprocess_links(all_media_links):
+    """
+    Preprocess a list of media links by extracting date and time information and filtering out invalid dates.
+
+    Parameters
+    ----------
+    all_media_links : list
+        A list of media links that contain date and time information to be extracted and validated.
+
+    Returns
+    -------
+    tuple
+        A tuple containing two lists:
+        - date_time_from_all_media_links : list
+            A list of valid date and time strings extracted from the media links.
+        - all_media_links_with_date_time : list
+            A list of media links that have valid date and time information.
+
+    Dependencies
+    ------------
+    get_date_time_from_link_list
+    get_invalid_dates
+
+    Notes
+    -----
+    Function Name: preprocess_links
+    This function preprocesses the media links by first extracting date and time information using the
+    `get_date_time_from_link_list` function. It then filters out media links that do not have valid date and time
+    information. Finally, it filters out invalid dates from the extracted date and time list using the
+    `get_invalid_dates` function.
+
+    Examples
+    --------
+    >>> media_links = ['http://example.com/2022-01-01_12:34:56/image.jpg',
+                        'http://example.com/20220101_123456/image.jpg',
+                        'http://example.com/2022-01-01T12:34:56/image.jpg']
+    >>> preprocess_links(media_links)
+    (['2022-01-01_12:34:56'], ['http://example.com/2022-01-01_12:34:56/image.jpg'])
+    (The `preprocess_links` function is called with the provided media links,
+    and the valid date and time strings and corresponding media links are returned in a tuple.)
+    """
+    # Get date and time from link list
+    date_time_from_all_media_links, date_time_not_found = get_date_time_from_link_list(all_media_links)
+
+    # Filter out links without date and time
+    all_media_links_with_date_time = [link for link in all_media_links if link not in date_time_not_found]
+
+    # Filter out invalid dates
+    invalid_dates = get_invalid_dates(date_time_from_all_media_links)
+    date_time_from_all_media_links = [date for date in date_time_from_all_media_links if date not in invalid_dates]
+
+    return date_time_from_all_media_links, all_media_links_with_date_time
+
 
 def convert_to_datetime(
     date_time_list,
@@ -799,25 +925,25 @@ def search_string_in_list(string_list, pattern):
     else:
         return matched_string
 
-def get_instrument_info(link_list, instrument_keywords, default_return=None):
+def get_instrument_info(link_list, keywords, default_return=None):
     """
-    Retrieves instrument information from a list of links based on instrument keywords.
+    Retrieves keywords from a list of links based on a given dictionary of keywords.
 
     Parameters
     ----------
     link_list : list
-        A list of links to search for instrument information.
-    instrument_keywords : dict
-        A dictionary where the keys represent instrument names
-        and the values are lists of keywords associated with each instrument.
+        A list of links to search for keywords.
+    keywords : dict
+        A dictionary where the keys represent categories (e.g., instruments, polarimetry)
+        and the values are lists of keywords associated with each category.
     default_return : any, optional
-        The value to return when no instruments are found. If not provided, None is returned.
+        The value to return when no keywords are found. If not provided, None is returned.
 
     Returns
     -------
     list or None
-        A list of instruments extracted from the link_list based on the instrument keywords.
-        If no instruments are found, default_return is returned.
+        A list of categories extracted from the link_list based on the keywords.
+        If no keywords are found, default_return is returned.
 
     Dependencies
     ------------
@@ -826,33 +952,32 @@ def get_instrument_info(link_list, instrument_keywords, default_return=None):
     Notes
     -----
     Function Name: get_instrument_info
-    This function takes a list of links and a dictionary of instrument keywords as input.
-    It iterates over each link in the link_list and checks if any of the instrument keywords are present in the link.
-    If a keyword is found, the corresponding instrument is added to the result set.
-    The function returns a list of instruments extracted from the link_list based on the instrument keywords,
-    or default_return if no instruments are found.
+    This function takes a list of links and a dictionary of keywords as input.
+    It iterates over each link in the link_list and checks if any of the keywords are present in the link.
+    If a keyword is found, the corresponding category is added to the result set.
+    The function returns a list of categories extracted from the link_list based on the keywords,
+    or default_return if no categories are found.
 
     Examples
     --------
-    >>> links = ['http://example.com/telescope', 'http://example.com/camera', 'http://example.com/spectrometer']
-    >>> instruments = {'Telescope': ['telescope'], 'Camera': ['camera'], 'Spectrometer': ['spectrometer']}
-    >>> get_instrument_info(links, instruments)
-    ['Telescope', 'Camera', 'Spectrometer']
-    (The `get_instrument_info` function is called with the provided list of links and instrument keywords.
-    The instruments 'Telescope', 'Camera', and 'Spectrometer'
-    are extracted based on the keywords found in the links and returned as a list.)
+    >>> links = ['http://example.com/telescope', 'http://example.com/camera',
+    'http://example.com/spectrometer', 'http://example.com/Bz+Bh']
+    >>> keyword_dict = {'Telescope': ['telescope'], 'Camera': ['camera'],
+        'Spectrometer': ['spectrometer'], 'Polarimetry': ['Bz+Bh']}
+    >>> get_instrument_info(links, keyword_dict)
+    ['Telescope', 'Camera', 'Spectrometer', 'Polarimetry']
+    (The `get_instrument_info` function is called with the provided list of links and keywords.
+    The categories 'Telescope', 'Camera', 'Spectrometer',
+    and 'Polarimetry' are extracted based on the keywords found in the links and returned as a list.)
     """
 
-    # define a function that takes a list of links and a dictionary of instrument keywords
-    # and returns a list of instruments
     result = set()
     for string in link_list:
-        for instrument, keywords in instrument_keywords.items():
-            for keyword in keywords:
+        for category, category_keywords in keywords.items():
+            for keyword in category_keywords:
                 if keyword in string:
-                    result.add(instrument)
+                    result.add(category)
                     break
-    # if no instrument is found, return default_return
     if len(result) == 0:
         return default_return
     return list(result)
@@ -1009,3 +1134,95 @@ def find_obs_dates(partial_string, obs_dates):
     if len(obs_dates_partial) == 0:
         print('No observation dates found')
     return None
+
+def generate_dataframe(date_time_from_all_media_links, all_media_links_with_date_time,
+                       INSTRUMENT_KEYWORDS={
+                           'CRISP': ['wb_6563', 'ha', 'Crisp', '6173', '8542', '6563', 'crisp'],
+                           'CHROMIS': ['Chromis', 'cak', '4846'],
+                           'IRIS': ['sji']
+                       },
+                       POLARIMETRY_KEYWORDS={
+                           'True': ['Bz+Bh', 'blos', 'Blos']
+                       }):
+    """
+    Generates a DataFrame containing media observation details from provided datetime strings and media links.
+
+    Parameters
+    ----------
+    date_time_from_all_media_links : list
+        A list of datetime strings representing the date and time of each media observation.
+    all_media_links_with_date_time : list
+        A list of media links corresponding to the date and time provided in `date_time_from_all_media_links`.
+    INSTRUMENT_KEYWORDS : dict, optional
+        A dictionary where the keys represent instrument names
+        and the values are lists of keywords associated with each instrument.
+    POLARIMETRY_KEYWORDS : dict, optional
+        A dictionary containing keywords that identify if polarimetry was performed.
+
+    Returns
+    -------
+    DataFrame
+        A pandas DataFrame where each row represents a media observation.
+        The DataFrame includes columns for datetime, instruments, targets,
+        comments, video links, image links, and polarimetry.
+
+    Dependencies
+    ------------
+    pandas module
+    convert_to_datetime
+    get_instrument_info
+    get_links_with_string
+
+    Notes
+    -----
+    Function Name: generate_dataframe
+    The function initializes a DataFrame using provided datetime strings and media links.
+    It extracts various features such as instruments, video links, and image links based on the media links.
+    The function is designed to allow manual updating of some fields like 'polarimetry'.
+
+    Examples
+    --------
+    >>> dt_links = ['2022-01-01_12:34:56', '2022-01-01_12:35:56']
+    >>> media_links = [['http://example.com/2022-01-01_12:34:56/image.jpg'],
+                       ['http://example.com/2022-01-01_12:35:56/video.mp4']]
+    >>> df = generate_dataframe(dt_links, media_links)
+    >>> print(df)
+           date_time     instruments      targets      comments     video_links    image_links polarimetry
+    0      2022-01-01_12:34:56  [...]     Unspecified  No comments  []            [...]         None
+    1      2022-01-01_12:35:56  [...]     Unspecified  No comments  [...]          []           None
+    """
+
+    # Convert date and time to datetime objects
+    date_time_objects = convert_to_datetime(date_time_from_all_media_links)
+
+    # Initialize DataFrame
+    df_dict = {
+        'date_time': date_time_objects,
+        'instruments': [[] for _ in range(len(date_time_objects))],
+        'targets': ['Unspecified' for _ in range(len(date_time_objects))],
+        'comments': ['No comments' for _ in range(len(date_time_objects))],
+        'video_links': [[] for _ in range(len(date_time_objects))],
+        'image_links': [[] for _ in range(len(date_time_objects))],
+        'polarimetry': [None for _ in range(len(date_time_objects))]
+    }
+    df = pd.DataFrame(df_dict)
+
+    # Group links by datetime and extract features
+    for dt, group in zip(date_time_objects, all_media_links_with_date_time):
+        instruments = get_instrument_info(group, INSTRUMENT_KEYWORDS)
+        video_links = get_links_with_string(group, ['mp4', 'mov'])
+        image_links = get_links_with_string(group, ['jpg', 'png'])
+
+        # Check for polarimetry keywords
+        polarimetry_keywords_found = get_instrument_info(group, POLARIMETRY_KEYWORDS)
+        if polarimetry_keywords_found:
+            polarimetry_status = True
+        else:
+            polarimetry_status = None
+
+        df.loc[df['date_time'] == dt, 'instruments'] = [instruments]
+        df.loc[df['date_time'] == dt, 'video_links'] = [video_links]
+        df.loc[df['date_time'] == dt, 'image_links'] = [image_links]
+        df.loc[df['date_time'] == dt, 'polarimetry'] = [polarimetry_status]
+
+    return df
