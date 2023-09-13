@@ -16,7 +16,8 @@ Here's an overview of what you can find in this wiki:
 - [Repository Structure](docs/Repository-structure.md): An overview of the structure and content of the PipMag repository.
 - [Quicklook Movie Filename Convention](docs/Quicklook-Movie-FIlename-Convention.md): The convention used for naming quicklook movies.
 - [La Palma Data Frame Structure](docs/La-Palma-Data-Frame-Structure.md): An explanation of the data frame structure used to store observations data.
+- [Contributing to the repository](CONTRIBUTING.md): Guidelines on contributing to this repository.
 
-If you have any questions or suggestions, feel free to raise an issue on the project's GitHub page.
+If you have any questions or suggestions, please raise an issue on the project's GitHub page. 
 
 ---
