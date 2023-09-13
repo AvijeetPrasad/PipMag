@@ -2,9 +2,8 @@
 # pip install pipreqs
 # pipreqs . --force
 beautifulsoup4==4.11.2
-ffmpeg-python==0.2.0
 ipython==8.10.0
 ipywidgets==7.7.3
-pandas==1.5.3
+pandas==2.0.3
 Requests==2.31.0
-setuptools==67.6.1
+setuptools==67.3.1
