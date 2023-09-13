@@ -422,15 +422,15 @@ def get_all_links(links):
     return all_links_sorted
 
 
-def load_or_fetch_links(reload=False, MEDIA_LINKS_FILE='all_media_links.csv'):
+def load_or_fetch_links(reload=False, media_links_file='all_media_links.csv'):
     """
-    Load media links from a specified file if it exists; otherwise, fetch the links from La Palma website.
+    Load media links from a specified file if it exists; otherwise, fetch the links from the La Palma website.
 
     Parameters
     ----------
     reload : bool, optional
         Flag to indicate whether to reload the media links from the La Palma website. Default is False.
-    MEDIA_LINKS_FILE : str, optional
+    media_links_file : str, optional
         The name of the CSV file where media links are saved. Default is 'all_media_links.csv'.
 
     Returns
@@ -467,21 +467,30 @@ def load_or_fetch_links(reload=False, MEDIA_LINKS_FILE='all_media_links.csv'):
     """
 
     # Check if MEDIA_LINKS_FILE exists then load the file, otherwise get the links
-    if os.path.isfile(MEDIA_LINKS_FILE) and not reload:
-        links_df = pd.read_csv(MEDIA_LINKS_FILE)
+    if os.path.isfile(media_links_file) and not reload:
+        links_df = pd.read_csv(media_links_file)
         all_media_links = links_df['Links'].tolist()
     else:
-        print('Fetching links from La Palma website...')
+        # Confirm with the user if they want to reload, as it takes a long time
+        if reload:
+            user_input = input("Fetching links from the La Palma website takes a long time. Continue? (y/n): ")
+            if user_input.lower() != 'y':
+                print("Operation cancelled.")
+                return []
+
         # Fetch observation years and dates
         obs_years = get_obs_years()
+
         obs_dates = get_obs_dates(obs_years)
 
         # Get video and image links for each observation date
+        print("Fetching links...")
         video_links = get_video_liks(obs_dates)
         image_links = get_image_links(obs_dates)
 
         # Get all video and image links
         all_video_links = get_all_links(video_links)
+
         all_image_links = get_all_links(image_links)
 
         # Combine and sort all media links
@@ -489,7 +498,7 @@ def load_or_fetch_links(reload=False, MEDIA_LINKS_FILE='all_media_links.csv'):
 
         # Save media links to file
         links_df = pd.DataFrame(all_media_links, columns=['Links'])
-        links_df.to_csv(MEDIA_LINKS_FILE, index=False)
+        links_df.to_csv(media_links_file, index=False)
 
     return all_media_links
 
