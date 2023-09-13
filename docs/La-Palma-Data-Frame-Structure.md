@@ -20,4 +20,4 @@ Below is the structure of the data frame along with a brief description and poss
 | `num_links`   | The number of links associated with the observation                    | Any integer value                                     |
 | `polarimetry` | Indicates whether polarimetry was used in the observation              | True, False                                           |
 
-This structured format allows for efficient querying and data extraction based on various observation parameters. For more information on interacting with the data frame, refer to the 'Working with the Data Frame' section of this wiki.
+This structured format allows for efficient querying and data extraction based on various observation parameters. For more information on interacting with the data frame, refer to the 'Working with the Data Frame' section of this wiki
