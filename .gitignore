@@ -4,3 +4,4 @@ __pycache__/
 config.ini
 pipmag.egg-info/
 data/la_palma_query.csv
+temp/

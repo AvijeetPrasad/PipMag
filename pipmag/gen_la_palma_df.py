@@ -16,15 +16,16 @@ POLARIMETRY_KEYWORDS = {
     'True': ['Bz+Bh', 'blos', 'Blos']
 }
 
-def load_or_fetch_links():
+def load_or_fetch_links(reload=False):
     """
     Load media links from file if it exists; otherwise, fetch the links.
     """
     # Check if MEDIA_LINKS_FILE exists then load the file, otherwise get the links
-    if os.path.isfile(MEDIA_LINKS_FILE):
+    if os.path.isfile(MEDIA_LINKS_FILE) and not reload:
         links_df = pd.read_csv(MEDIA_LINKS_FILE)
         all_media_links = links_df['Links'].tolist()
     else:
+        print('Fetching links from La Palma website...')
         # Fetch observation years and dates
         obs_years = lp.get_obs_years()
         obs_dates = lp.get_obs_dates(obs_years)
@@ -173,7 +174,7 @@ def main():
     """
     Main function to load or fetch links, preprocess links, generate DataFrame, and fix duplicate times.
     """
-    all_media_links = load_or_fetch_links()
+    all_media_links = load_or_fetch_links(reload=True)
     date_time_from_all_media_links, all_media_links_with_date_time = preprocess_links(all_media_links)
     df = generate_dataframe(date_time_from_all_media_links, all_media_links_with_date_time)
     grouped_df = fix_duplicate_times(df)
