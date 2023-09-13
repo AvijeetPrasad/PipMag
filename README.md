@@ -1,3 +1,5 @@
+# Getting Started
+
 PipMag is a Python package developed to provide a streamlined and intuitive interface for browsing and querying solar observations data collected by the Swedish Solar Telescope (SST).
 
 This project aims to assist users by offering a powerful tool to navigate through a vast amount of solar data by simplifying the process of data retrieval and organization.
