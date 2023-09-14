@@ -1219,12 +1219,12 @@ def generate_dataframe(date_time_from_all_media_links, all_media_links_with_date
     df = df.set_index('obs_id')
 
     # Initialize additional columns
-    df['targets'] = None
     df['comments'] = None
     df['polarimetry'] = None
 
     # Use apply to update DataFrame
     df['instruments'] = df['links'].apply(lambda x: get_instrument_info(x, keywords=instrument_keywords))
+    df['targets'] = df.apply(lambda x: [], axis=1)
     df['polarimetry'] = df['links'].apply(lambda x: get_instrument_info(x, keywords=polarimetry_keywords))
     df['video_links'] = df['links'].apply(lambda x: get_links_with_string(x, ['mp4', 'mov']))
     df['image_links'] = df['links'].apply(lambda x: get_links_with_string(x, ['jpg', 'png']))
@@ -1345,3 +1345,43 @@ def add_existing_and_new_dataframes(new_df: pd.DataFrame,
     # combined_df.to_csv(LA_PALMA_OBS_DATA_FILE, index=False)
 
     return combined_df
+
+
+def save_dataframe_to_csv(df, csv_filename, index=False):
+    # Identify columns that contain lists
+    columns_to_convert = [col for col, dtype in zip(
+        df.columns, df.dtypes) if isinstance(df.loc[df.first_valid_index(), col], list)]
+
+    # Convert lists to strings
+    for col in columns_to_convert:
+        df[col] = df[col].apply(lambda x: ';'.join(map(str, x)) if x is not None else None)
+
+    # Convert None to empty string
+    df.fillna("", inplace=True)
+
+    # Convert boolean columns to string
+    boolean_columns = [col for col in df.columns if df[col].dtype == 'bool']
+    for col in boolean_columns:
+        df[col] = df[col].astype(str)
+
+    # Save to CSV, optionally include index
+    df.to_csv(csv_filename, index=index)
+
+def read_csv_to_dataframe(csv_filename):
+    # Read CSV to DataFrame
+    df = pd.read_csv(csv_filename)
+
+    # Identify columns that should contain lists and convert them back
+    columns_to_convert_back = [col for col in df.columns if ';' in df[col].astype(str).iloc[0]]
+    for col in columns_to_convert_back:
+        df[col] = df[col].apply(lambda x: x.split(';') if pd.notna(x) else None)
+
+    # Convert empty strings back to None
+    df.replace("", None, inplace=True)
+
+    # Convert string 'True'/'False' back to boolean
+    boolean_columns = [col for col in df.columns if df[col].astype(str).str.contains('True|False').any()]
+    for col in boolean_columns:
+        df[col] = df[col].astype(bool)
+
+    return df
