@@ -34,7 +34,7 @@ def get_obs_years(la_palma_url='http://tsih3.uio.no/lapalma/', verbose=False):
     Notes
     -----
     Function Name: get_obs_years
-    This function retrieves the observation years available at the La Palma Observatory from the specified URL.
+    This function retrieves the observation years available at the La Palma Observatory from th e specified URL.
     It makes an HTTP GET request to the URL and uses BeautifulSoup to parse the HTML content of the webpage.
     It extracts the subdirectories (observation years) from the webpage links
     and filters them to include only those starting with '20'.
@@ -1354,6 +1354,39 @@ def add_existing_and_new_dataframes(new_df: pd.DataFrame,
 
 
 def save_dataframe_to_csv(df, csv_filename, index=False):
+    """
+    Saves a given DataFrame to a CSV file with special handling for list and boolean types.
+
+    Parameters
+    ----------
+    df : pandas.DataFrame
+        The DataFrame to be saved to CSV.
+    csv_filename : str
+        The name of the CSV file to which the DataFrame will be saved.
+    index : bool, optional
+        Whether to write row (index) names. Default is False.
+
+    Returns
+    -------
+    None
+        The function saves the DataFrame to a CSV file and does not return any value.
+
+    Dependencies
+    ------------
+    pandas
+
+    Notes
+    -----
+    Function Name: save_dataframe_to_csv
+    Special handling for columns containing lists and boolean types. Lists are joined into
+    semicolon-separated strings. Booleans are converted to strings.
+
+    Examples
+    --------
+    >>> save_dataframe_to_csv(df, "output.csv", index=False)
+    The DataFrame 'df' will be saved to a CSV file named 'output.csv'.
+    """
+
     # Identify columns that contain lists
     columns_to_convert = [col for col, dtype in zip(
         df.columns, df.dtypes) if isinstance(df.loc[df.first_valid_index(), col], list)]
@@ -1375,15 +1408,38 @@ def save_dataframe_to_csv(df, csv_filename, index=False):
 
 def read_csv_to_dataframe(csv_filename, list_columns=None):
     """
-    Reads a CSV file and returns a DataFrame, converting specific columns back to lists, None, and booleans.
+    Reads a CSV file into a pandas DataFrame with special handling for list and boolean types.
 
-    Parameters:
-        csv_filename (str): The name of the CSV file to read.
-        list_columns (list, optional): List of columns which should be of list type.
+    Parameters
+    ----------
+    csv_filename : str
+        The name of the CSV file to read.
+    list_columns : list of str, optional
+        List of column names that should be converted back to lists. Default is None.
 
-    Returns:
-        pd.DataFrame: The DataFrame containing the CSV data.
+    Returns
+    -------
+    pandas.DataFrame
+        The DataFrame containing the CSV data, with appropriate data types for special columns.
+
+    Dependencies
+    ------------
+    pandas
+
+    Notes
+    -----
+    Function Name: read_csv_to_dataframe
+    Special handling for columns listed in 'list_columns' and for boolean types.
+    Columns in 'list_columns' are converted back to lists, and boolean strings are
+    converted back to actual boolean values.
+
+    Examples
+    --------
+    >>> read_csv_to_dataframe("output.csv", list_columns=['instruments', 'targets'])
+    Returns a DataFrame with 'instruments' and 'targets' as list columns, and booleans
+    where applicable.
     """
+
     # Read CSV to DataFrame
     df = pd.read_csv(csv_filename, dtype=str)
 
