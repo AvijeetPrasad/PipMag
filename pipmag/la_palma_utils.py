@@ -1,8 +1,12 @@
-import requests
 from bs4 import BeautifulSoup
-import re
 from datetime import datetime
+import os
 import pandas as pd
+import re
+import requests
+from pandas import DataFrame, to_datetime
+from datetime import timedelta
+from distutils.util import strtobool
 
 
 def get_obs_years(la_palma_url='http://tsih3.uio.no/lapalma/', verbose=False):
@@ -30,7 +34,7 @@ def get_obs_years(la_palma_url='http://tsih3.uio.no/lapalma/', verbose=False):
     Notes
     -----
     Function Name: get_obs_years
-    This function retrieves the observation years available at the La Palma Observatory from the specified URL.
+    This function retrieves the observation years available at the La Palma Observatory from th e specified URL.
     It makes an HTTP GET request to the URL and uses BeautifulSoup to parse the HTML content of the webpage.
     It extracts the subdirectories (observation years) from the webpage links
     and filters them to include only those starting with '20'.
@@ -418,6 +422,90 @@ def get_all_links(links):
     print(f'total number of links: {len(all_links_sorted)}')
     return all_links_sorted
 
+
+def load_or_fetch_links(reload=False, media_links_file='all_media_links.csv'):
+    """
+    Load media links from a specified file if it exists; otherwise, fetch the links from the La Palma website.
+
+    Parameters
+    ----------
+    reload : bool, optional
+        Flag to indicate whether to reload the media links from the La Palma website. Default is False.
+    media_links_file : str, optional
+        The name of the CSV file where media links are saved. Default is 'all_media_links.csv'.
+
+    Returns
+    -------
+    list
+        List of all media links either loaded from the file or fetched from the website.
+
+    Dependencies
+    ------------
+    os
+    pandas
+    get_obs_years
+    get_obs_dates
+    get_video_links
+    get_image_links
+    get_all_links
+
+    Notes
+    -----
+    Function Name: load_or_fetch_links
+    The function checks for the existence of the MEDIA_LINKS_FILE.
+    If the file exists and the reload flag is False,
+    the function reads the file to load the media links.
+    Otherwise, it fetches the media links from the La Palma website,
+    sorts them, and saves them to the specified file.
+
+    Examples
+    --------
+    >>> load_or_fetch_links()
+    ['link1', 'link2', 'link3']
+
+    >>> load_or_fetch_links(reload=True)
+    ['new_link1', 'new_link2', 'new_link3']
+    """
+
+    # Check if MEDIA_LINKS_FILE exists then load the file, otherwise get the links
+    if os.path.isfile(media_links_file):
+        links_df = pd.read_csv(media_links_file)
+        all_media_links = links_df['Links'].tolist()
+    else:
+        print("File not found!")
+        print("Fetching links from the La Palma website by setting 'reload=True'...")
+
+        # Confirm with the user if they want to reload, as it takes a long time
+    if reload:
+        user_input = input("Fetching links from the La Palma website takes a few minutes. Continue? (y/n): ")
+        if user_input.lower() != 'y':
+            print("Loading existing file!.")
+            return all_media_links
+
+        # Fetch observation years and dates
+        obs_years = get_obs_years()
+
+        obs_dates = get_obs_dates(obs_years)
+
+        # Get video and image links for each observation date
+        print("Fetching links...")
+        video_links = get_video_liks(obs_dates)
+        image_links = get_image_links(obs_dates)
+
+        # Get all video and image links
+        all_video_links = get_all_links(video_links)
+
+        all_image_links = get_all_links(image_links)
+
+        # Combine and sort all media links
+        all_media_links = sorted(all_image_links + all_video_links)
+
+        # Save media links to file
+        links_df = pd.DataFrame(all_media_links, columns=['Links'])
+        links_df.to_csv(media_links_file, index=False)
+
+    return all_media_links
+
 def get_date_time_from_link(link,
                             pattern=r'(\d{4}-\d{2}-\d{2})_(\d{2}:\d{2}:\d{2})'):
     """
@@ -679,6 +767,59 @@ def get_invalid_dates(
         print(f"Invalid dates: {invalid_dates}")
     return invalid_dates
 
+def preprocess_links(all_media_links):
+    """
+    Preprocess a list of media links by extracting date and time information and filtering out invalid dates.
+
+    Parameters
+    ----------
+    all_media_links : list
+        A list of media links that contain date and time information to be extracted and validated.
+
+    Returns
+    -------
+    tuple
+        A tuple containing two lists:
+        - date_time_from_all_media_links : list
+            A list of valid date and time strings extracted from the media links.
+        - all_media_links_with_date_time : list
+            A list of media links that have valid date and time information.
+
+    Dependencies
+    ------------
+    get_date_time_from_link_list
+    get_invalid_dates
+
+    Notes
+    -----
+    Function Name: preprocess_links
+    This function preprocesses the media links by first extracting date and time information using the
+    `get_date_time_from_link_list` function. It then filters out media links that do not have valid date and time
+    information. Finally, it filters out invalid dates from the extracted date and time list using the
+    `get_invalid_dates` function.
+
+    Examples
+    --------
+    >>> media_links = ['http://example.com/2022-01-01_12:34:56/image.jpg',
+                        'http://example.com/20220101_123456/image.jpg',
+                        'http://example.com/2022-01-01T12:34:56/image.jpg']
+    >>> preprocess_links(media_links)
+    (['2022-01-01_12:34:56'], ['http://example.com/2022-01-01_12:34:56/image.jpg'])
+    (The `preprocess_links` function is called with the provided media links,
+    and the valid date and time strings and corresponding media links are returned in a tuple.)
+    """
+    # Get date and time from link list
+    date_time_from_all_media_links, date_time_not_found = get_date_time_from_link_list(all_media_links)
+
+    # Filter out links without date and time
+    all_media_links_with_date_time = [link for link in all_media_links if link not in date_time_not_found]
+
+    # Filter out invalid dates
+    invalid_dates = get_invalid_dates(date_time_from_all_media_links)
+    date_time_from_all_media_links = [date for date in date_time_from_all_media_links if date not in invalid_dates]
+
+    return date_time_from_all_media_links, all_media_links_with_date_time
+
 
 def convert_to_datetime(
     date_time_list,
@@ -799,25 +940,27 @@ def search_string_in_list(string_list, pattern):
     else:
         return matched_string
 
-def get_instrument_info(link_list, instrument_keywords, default_return=None):
+def get_instrument_info(link_list, keywords, default_return=None, is_polarimetry=False):
     """
-    Retrieves instrument information from a list of links based on instrument keywords.
+    Retrieves keywords from a list of links based on a given dictionary of keywords.
 
     Parameters
     ----------
     link_list : list
-        A list of links to search for instrument information.
-    instrument_keywords : dict
-        A dictionary where the keys represent instrument names
-        and the values are lists of keywords associated with each instrument.
+        A list of links to search for keywords.
+    keywords : dict
+        A dictionary where the keys represent categories (e.g., instruments, polarimetry)
+        and the values are lists of keywords associated with each category.
     default_return : any, optional
-        The value to return when no instruments are found. If not provided, None is returned.
+        The value to return when no keywords are found. If not provided, None is returned.
+    is_polarimetry : bool, optional
+        Flag to indicate whether the keywords represent polarimetry. Default is False.
 
     Returns
     -------
     list or None
-        A list of instruments extracted from the link_list based on the instrument keywords.
-        If no instruments are found, default_return is returned.
+        A list of categories extracted from the link_list based on the keywords.
+        If no keywords are found, default_return is returned.
 
     Dependencies
     ------------
@@ -826,35 +969,36 @@ def get_instrument_info(link_list, instrument_keywords, default_return=None):
     Notes
     -----
     Function Name: get_instrument_info
-    This function takes a list of links and a dictionary of instrument keywords as input.
-    It iterates over each link in the link_list and checks if any of the instrument keywords are present in the link.
-    If a keyword is found, the corresponding instrument is added to the result set.
-    The function returns a list of instruments extracted from the link_list based on the instrument keywords,
-    or default_return if no instruments are found.
+    This function takes a list of links and a dictionary of keywords as input.
+    It iterates over each link in the link_list and checks if any of the keywords are present in the link.
+    If a keyword is found, the corresponding category is added to the result set.
+    The function returns a list of categories extracted from the link_list based on the keywords,
+    or default_return if no categories are found.
 
     Examples
     --------
-    >>> links = ['http://example.com/telescope', 'http://example.com/camera', 'http://example.com/spectrometer']
-    >>> instruments = {'Telescope': ['telescope'], 'Camera': ['camera'], 'Spectrometer': ['spectrometer']}
-    >>> get_instrument_info(links, instruments)
-    ['Telescope', 'Camera', 'Spectrometer']
-    (The `get_instrument_info` function is called with the provided list of links and instrument keywords.
-    The instruments 'Telescope', 'Camera', and 'Spectrometer'
-    are extracted based on the keywords found in the links and returned as a list.)
+    >>> links = ['http://example.com/telescope', 'http://example.com/camera',
+    'http://example.com/spectrometer', 'http://example.com/Bz+Bh']
+    >>> keyword_dict = {'Telescope': ['telescope'], 'Camera': ['camera'],
+        'Spectrometer': ['spectrometer'], 'Polarimetry': ['Bz+Bh']}
+    >>> get_instrument_info(links, keyword_dict)
+    ['Telescope', 'Camera', 'Spectrometer', 'Polarimetry']
+    (The `get_instrument_info` function is called with the provided list of links and keywords.
+    The categories 'Telescope', 'Camera', 'Spectrometer',
+    and 'Polarimetry' are extracted based on the keywords found in the links and returned as a list.)
     """
 
-    # define a function that takes a list of links and a dictionary of instrument keywords
-    # and returns a list of instruments
     result = set()
     for string in link_list:
-        for instrument, keywords in instrument_keywords.items():
-            for keyword in keywords:
+        for category, category_keywords in keywords.items():
+            for keyword in category_keywords:
                 if keyword in string:
-                    result.add(instrument)
+                    result.add(category)
                     break
-    # if no instrument is found, return default_return
     if len(result) == 0:
         return default_return
+    if is_polarimetry:
+        return True if 'True' in result else None
     return list(result)
 
 
@@ -1009,3 +1153,312 @@ def find_obs_dates(partial_string, obs_dates):
     if len(obs_dates_partial) == 0:
         print('No observation dates found')
     return None
+
+def generate_dataframe(date_time_from_all_media_links, all_media_links_with_date_time,
+                       instrument_keywords={
+                           'CRISP': ['wb_6563', 'ha', 'Crisp', '6173', '8542', '6563', 'crisp'],
+                           'CHROMIS': ['Chromis', 'cak', '4846'],
+                           'IRIS': ['sji']
+                       },
+                       polarimetry_keywords={
+                           'True': ['Bz+Bh', 'blos', 'Blos']
+                       }):
+    """
+    Generates a DataFrame containing media observation details from provided datetime strings and media links.
+
+    Parameters
+    ----------
+    date_time_from_all_media_links : list
+        A list of datetime strings representing the date and time of each media observation.
+    all_media_links_with_date_time : list
+        A list of media links corresponding to the date and time provided in `date_time_from_all_media_links`.
+    instrument_keywords : dict, optional
+        A dictionary where the keys represent instrument names
+        and the values are lists of keywords associated with each instrument.
+    polarimetry_keywords : dict, optional
+        A dictionary containing keywords that identify if polarimetry was performed.
+
+    Returns
+    -------
+    DataFrame
+        A pandas DataFrame where each row represents a media observation.
+        The DataFrame includes columns for datetime, instruments, targets,
+        comments, video links, image links, and polarimetry.
+
+    Dependencies
+    ------------
+    pandas module
+    convert_to_datetime
+    get_instrument_info
+    get_links_with_string
+
+    Notes
+    -----
+    Function Name: generate_dataframe
+    The function initializes a DataFrame using provided datetime strings and media links.
+    It extracts various features such as instruments, video links, and image links based on the media links.
+    The function is designed to allow manual updating of some fields like 'polarimetry'.
+
+    Examples
+    --------
+    >>> dt_links = ['2022-01-01_12:34:56', '2022-01-01_12:35:56']
+    >>> media_links = [['http://example.com/2022-01-01_12:34:56/image.jpg'],
+                       ['http://example.com/2022-01-01_12:35:56/video.mp4']]
+    >>> df = generate_dataframe(dt_links, media_links)
+    >>> print(df)
+           date_time     instruments      targets      comments     video_links    image_links polarimetry
+    0      2022-01-01_12:34:56  [...]     []  ""     []            [...]         None
+    1      2022-01-01_12:35:56  [...]     []  "" comments  [...]          []           None
+    """
+
+    # Convert date and time to datetime objects
+    date_time_objects = convert_to_datetime(date_time_from_all_media_links)
+
+    # Create DataFrame with datetime index
+    df = pd.DataFrame({'links': all_media_links_with_date_time}, index=date_time_objects)
+
+    # Group links by datetime index
+    df = df.groupby(df.index).agg({'links': lambda x: list(x)})
+    df['obs_id'] = range(len(df))
+    df['date_time'] = df.index
+    df = df.set_index('obs_id')
+
+    # Initialize additional columns
+    df['comments'] = None
+    df['polarimetry'] = None
+
+    # Use apply to update DataFrame
+    df['instruments'] = df['links'].apply(lambda x: get_instrument_info(x, keywords=instrument_keywords))
+    df['targets'] = df.apply(lambda x: [], axis=1)
+    df['polarimetry'] = df['links'].apply(lambda x: get_instrument_info(
+        x, keywords=polarimetry_keywords, is_polarimetry=True))
+    df['video_links'] = df['links'].apply(lambda x: get_links_with_string(x, ['mp4', 'mov']))
+    df['image_links'] = df['links'].apply(lambda x: get_links_with_string(x, ['jpg', 'png']))
+    # Drop links column
+    df.drop('links', axis=1, inplace=True)
+
+    # Reorder columns
+    column_order = ['date_time', 'instruments', 'targets', 'polarimetry', 'comments', 'video_links', 'image_links']
+    df = df[column_order]
+
+    return df
+
+def fix_duplicate_times(df: DataFrame, TIME_DIFF_THRESHOLD_SECONDS: int = 60) -> DataFrame:
+    """
+    Fix duplicate times in DataFrame by grouping rows based on time proximity.
+
+    Parameters
+    ----------
+    df : DataFrame
+        The DataFrame containing media observation details.
+    TIME_DIFF_THRESHOLD_SECONDS : int, optional
+        Time difference threshold in seconds. Default is 60.
+
+    Returns
+    -------
+    DataFrame
+        A new DataFrame where rows with similar 'date_time' values are grouped.
+
+    Notes
+    -----
+    Function Name: fix_duplicate_times
+    This function converts the 'date_time' column to DateTime objects and sorts the DataFrame.
+    It then groups the DataFrame based on time proximity and aggregates each column.
+    Duplicates in the 'instruments' and 'polarimetry' columns are removed.
+    """
+
+    # Convert 'date_time' column to DateTime type and sort DataFrame by 'date_time'
+    df['date_time'] = to_datetime(df['date_time'])
+    sorted_df = df.sort_values('date_time')
+
+    # Define threshold for time difference
+    threshold = timedelta(seconds=TIME_DIFF_THRESHOLD_SECONDS)
+
+    # Group rows based on time proximity
+    grouped_df = sorted_df.groupby((sorted_df['date_time'].diff() > threshold).cumsum()).agg({
+        'date_time': 'first',
+        'instruments': lambda x: list(set(item for sublist in x if sublist is not None for item in sublist)),
+        'targets': 'first',
+        'comments': 'first',
+        'video_links': lambda x: list(set(item for sublist in x if sublist is not None for item in sublist)),
+        'image_links': lambda x: list(set(item for sublist in x if sublist is not None for item in sublist)),
+        'polarimetry': 'first'
+    })
+
+    # Convert 'date_time' column back to native Python datetime
+    grouped_df['date_time'] = grouped_df['date_time'].apply(lambda x: x.to_pydatetime())
+
+    return grouped_df
+
+def add_existing_and_new_dataframes(new_df: pd.DataFrame,
+                                    LA_PALMA_OBS_DATA_FILE: str = 'la_palma_obs_data.csv') -> pd.DataFrame:
+    """
+    Add a potential new DataFrame to the old DataFrame file without losing any data.
+
+    Parameters
+    ----------
+    new_df : pd.DataFrame
+        New DataFrame containing media observation details.
+    LA_PALMA_OBS_DATA_FILE : str, optional
+        File name of the existing DataFrame CSV file. Default is 'la_palma_obs_data.csv'.
+
+    Returns
+    -------
+    pd.DataFrame
+        A DataFrame containing the merged data.
+
+    Notes
+    -----
+    Function Name: add_existing_and_new_dataframes
+    This function loads an existing DataFrame from a CSV file, performs necessary data type conversions,
+    and then concatenates it with the new DataFrame. Duplicates, if any, are removed.
+    """
+
+    # Load the existing CSV file as a DataFrame
+    try:
+        existing_df = pd.read_csv(LA_PALMA_OBS_DATA_FILE)
+    except FileNotFoundError:
+        print(f"File {LA_PALMA_OBS_DATA_FILE} not found. Creating a new DataFrame.")
+        return new_df
+
+    # Convert 'date_time' column to DateTime type
+    existing_df['date_time'] = pd.to_datetime(existing_df['date_time'])
+    new_df['date_time'] = pd.to_datetime(new_df['date_time'])
+
+    # List of columns to convert from strings to lists
+    columns_to_convert = ['video_links', 'image_links', 'instruments']
+
+    # Convert the strings in each column back to lists
+    for col in columns_to_convert:
+        existing_df[col] = existing_df[col].apply(lambda x: x.split(';') if isinstance(x, str) else [])
+        new_df[col] = new_df[col].apply(lambda x: x.split(';') if isinstance(x, str) else [])
+
+    # List of columns to convert from NaN to None
+    columns_to_convert = ['comments', 'polarimetry', 'targets']
+
+    # Convert the NaNs in each column back to None
+    for col in columns_to_convert:
+        existing_df[col] = existing_df[col].apply(lambda x: None if pd.isna(x) else x)
+        new_df[col] = new_df[col].apply(lambda x: None if pd.isna(x) else x)
+
+    # Concatenate the existing DataFrame and the new DataFrame
+    combined_df = pd.concat([existing_df, new_df])
+
+    # Remove duplicates based on 'date_time'
+    combined_df.drop_duplicates(subset=['date_time'], inplace=True, keep='first')
+
+    # Optionally, you can save the combined DataFrame back to the CSV
+    # combined_df.to_csv(LA_PALMA_OBS_DATA_FILE, index=False)
+
+    return combined_df
+
+
+def save_dataframe_to_csv(df, csv_filename, index=False):
+    """
+    Saves a given DataFrame to a CSV file with special handling for list and boolean types.
+
+    Parameters
+    ----------
+    df : pandas.DataFrame
+        The DataFrame to be saved to CSV.
+    csv_filename : str
+        The name of the CSV file to which the DataFrame will be saved.
+    index : bool, optional
+        Whether to write row (index) names. Default is False.
+
+    Returns
+    -------
+    None
+        The function saves the DataFrame to a CSV file and does not return any value.
+
+    Dependencies
+    ------------
+    pandas
+
+    Notes
+    -----
+    Function Name: save_dataframe_to_csv
+    Special handling for columns containing lists and boolean types. Lists are joined into
+    semicolon-separated strings. Booleans are converted to strings.
+
+    Examples
+    --------
+    >>> save_dataframe_to_csv(df, "output.csv", index=False)
+    The DataFrame 'df' will be saved to a CSV file named 'output.csv'.
+    """
+
+    # Identify columns that contain lists
+    columns_to_convert = [col for col, dtype in zip(
+        df.columns, df.dtypes) if isinstance(df.loc[df.first_valid_index(), col], list)]
+
+    # Convert lists to strings
+    for col in columns_to_convert:
+        df[col] = df[col].apply(lambda x: ';'.join(map(str, x)) if x is not None else None)
+
+    # Convert None to empty string
+    df.fillna("", inplace=True)
+
+    # Convert boolean columns to string
+    boolean_columns = [col for col in df.columns if df[col].dtype == 'bool']
+    for col in boolean_columns:
+        df[col] = df[col].apply(lambda x: str(x) if x is not None else x)
+
+    # Save to CSV, optionally include index
+    df.to_csv(csv_filename, index=index)
+
+def read_csv_to_dataframe(csv_filename, list_columns=None):
+    """
+    Reads a CSV file into a pandas DataFrame with special handling for list and boolean types.
+
+    Parameters
+    ----------
+    csv_filename : str
+        The name of the CSV file to read.
+    list_columns : list of str, optional
+        List of column names that should be converted back to lists. Default is None.
+
+    Returns
+    -------
+    pandas.DataFrame
+        The DataFrame containing the CSV data, with appropriate data types for special columns.
+
+    Dependencies
+    ------------
+    pandas
+
+    Notes
+    -----
+    Function Name: read_csv_to_dataframe
+    Special handling for columns listed in 'list_columns' and for boolean types.
+    Columns in 'list_columns' are converted back to lists, and boolean strings are
+    converted back to actual boolean values.
+
+    Examples
+    --------
+    >>> read_csv_to_dataframe("output.csv", list_columns=['instruments', 'targets'])
+    Returns a DataFrame with 'instruments' and 'targets' as list columns, and booleans
+    where applicable.
+    """
+
+    # Read CSV to DataFrame
+    df = pd.read_csv(csv_filename, dtype=str)
+
+    # Convert columns that should contain lists
+    if list_columns is not None:
+        for col in list_columns:
+            df[col] = df[col].apply(lambda x: x.split(';') if pd.notna(x) else [])
+
+    # Convert empty strings back to None
+    df.replace("", None, inplace=True)
+
+    # Convert NaN to None for all non-list columns
+    for col in df.columns:
+        if col not in list_columns:
+            df[col] = df[col].apply(lambda x: None if pd.isna(x) else x)
+
+    # Convert string 'True'/'False' back to boolean
+    boolean_columns = [col for col in df.columns if df[col].astype(str).str.contains('True|False').any()]
+    for col in boolean_columns:
+        df[col] = df[col].apply(lambda x: bool(strtobool(x)) if pd.notna(x) and isinstance(x, str) else None)
+
+    return df
