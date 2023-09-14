@@ -6,6 +6,7 @@ import re
 import requests
 from pandas import DataFrame, to_datetime
 from datetime import timedelta
+from distutils.util import strtobool
 
 
 def get_obs_years(la_palma_url='http://tsih3.uio.no/lapalma/', verbose=False):
@@ -939,7 +940,7 @@ def search_string_in_list(string_list, pattern):
     else:
         return matched_string
 
-def get_instrument_info(link_list, keywords, default_return=None):
+def get_instrument_info(link_list, keywords, default_return=None, is_polarimetry=False):
     """
     Retrieves keywords from a list of links based on a given dictionary of keywords.
 
@@ -952,6 +953,8 @@ def get_instrument_info(link_list, keywords, default_return=None):
         and the values are lists of keywords associated with each category.
     default_return : any, optional
         The value to return when no keywords are found. If not provided, None is returned.
+    is_polarimetry : bool, optional
+        Flag to indicate whether the keywords represent polarimetry. Default is False.
 
     Returns
     -------
@@ -994,6 +997,8 @@ def get_instrument_info(link_list, keywords, default_return=None):
                     break
     if len(result) == 0:
         return default_return
+    if is_polarimetry:
+        return True if 'True' in result else None
     return list(result)
 
 
@@ -1225,7 +1230,8 @@ def generate_dataframe(date_time_from_all_media_links, all_media_links_with_date
     # Use apply to update DataFrame
     df['instruments'] = df['links'].apply(lambda x: get_instrument_info(x, keywords=instrument_keywords))
     df['targets'] = df.apply(lambda x: [], axis=1)
-    df['polarimetry'] = df['links'].apply(lambda x: get_instrument_info(x, keywords=polarimetry_keywords))
+    df['polarimetry'] = df['links'].apply(lambda x: get_instrument_info(
+        x, keywords=polarimetry_keywords, is_polarimetry=True))
     df['video_links'] = df['links'].apply(lambda x: get_links_with_string(x, ['mp4', 'mov']))
     df['image_links'] = df['links'].apply(lambda x: get_links_with_string(x, ['jpg', 'png']))
     # Drop links column
@@ -1276,7 +1282,7 @@ def fix_duplicate_times(df: DataFrame, TIME_DIFF_THRESHOLD_SECONDS: int = 60) ->
         'comments': 'first',
         'video_links': lambda x: list(set(item for sublist in x if sublist is not None for item in sublist)),
         'image_links': lambda x: list(set(item for sublist in x if sublist is not None for item in sublist)),
-        'polarimetry': lambda x: any(item for item in x if item is not None)
+        'polarimetry': 'first'
     })
 
     # Convert 'date_time' column back to native Python datetime
@@ -1362,26 +1368,41 @@ def save_dataframe_to_csv(df, csv_filename, index=False):
     # Convert boolean columns to string
     boolean_columns = [col for col in df.columns if df[col].dtype == 'bool']
     for col in boolean_columns:
-        df[col] = df[col].astype(str)
+        df[col] = df[col].apply(lambda x: str(x) if x is not None else x)
 
     # Save to CSV, optionally include index
     df.to_csv(csv_filename, index=index)
 
-def read_csv_to_dataframe(csv_filename):
-    # Read CSV to DataFrame
-    df = pd.read_csv(csv_filename)
+def read_csv_to_dataframe(csv_filename, list_columns=None):
+    """
+    Reads a CSV file and returns a DataFrame, converting specific columns back to lists, None, and booleans.
 
-    # Identify columns that should contain lists and convert them back
-    columns_to_convert_back = [col for col in df.columns if ';' in df[col].astype(str).iloc[0]]
-    for col in columns_to_convert_back:
-        df[col] = df[col].apply(lambda x: x.split(';') if pd.notna(x) else None)
+    Parameters:
+        csv_filename (str): The name of the CSV file to read.
+        list_columns (list, optional): List of columns which should be of list type.
+
+    Returns:
+        pd.DataFrame: The DataFrame containing the CSV data.
+    """
+    # Read CSV to DataFrame
+    df = pd.read_csv(csv_filename, dtype=str)
+
+    # Convert columns that should contain lists
+    if list_columns is not None:
+        for col in list_columns:
+            df[col] = df[col].apply(lambda x: x.split(';') if pd.notna(x) else [])
 
     # Convert empty strings back to None
     df.replace("", None, inplace=True)
 
+    # Convert NaN to None for all non-list columns
+    for col in df.columns:
+        if col not in list_columns:
+            df[col] = df[col].apply(lambda x: None if pd.isna(x) else x)
+
     # Convert string 'True'/'False' back to boolean
     boolean_columns = [col for col in df.columns if df[col].astype(str).str.contains('True|False').any()]
     for col in boolean_columns:
-        df[col] = df[col].astype(bool)
+        df[col] = df[col].apply(lambda x: bool(strtobool(x)) if pd.notna(x) and isinstance(x, str) else None)
 
     return df
