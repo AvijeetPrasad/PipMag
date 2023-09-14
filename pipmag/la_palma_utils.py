@@ -467,16 +467,19 @@ def load_or_fetch_links(reload=False, media_links_file='all_media_links.csv'):
     """
 
     # Check if MEDIA_LINKS_FILE exists then load the file, otherwise get the links
-    if os.path.isfile(media_links_file) and not reload:
+    if os.path.isfile(media_links_file):
         links_df = pd.read_csv(media_links_file)
         all_media_links = links_df['Links'].tolist()
     else:
+        print("File not found!")
+        print("Fetching links from the La Palma website by setting 'reload=True'...")
+
         # Confirm with the user if they want to reload, as it takes a long time
-        if reload:
-            user_input = input("Fetching links from the La Palma website takes a long time. Continue? (y/n): ")
-            if user_input.lower() != 'y':
-                print("Operation cancelled.")
-                return []
+    if reload:
+        user_input = input("Fetching links from the La Palma website takes a few minutes. Continue? (y/n): ")
+        if user_input.lower() != 'y':
+            print("Loading existing file!.")
+            return all_media_links
 
         # Fetch observation years and dates
         obs_years = get_obs_years()
@@ -1147,12 +1150,12 @@ def find_obs_dates(partial_string, obs_dates):
     return None
 
 def generate_dataframe(date_time_from_all_media_links, all_media_links_with_date_time,
-                       INSTRUMENT_KEYWORDS={
+                       instrument_keywords={
                            'CRISP': ['wb_6563', 'ha', 'Crisp', '6173', '8542', '6563', 'crisp'],
                            'CHROMIS': ['Chromis', 'cak', '4846'],
                            'IRIS': ['sji']
                        },
-                       POLARIMETRY_KEYWORDS={
+                       polarimetry_keywords={
                            'True': ['Bz+Bh', 'blos', 'Blos']
                        }):
     """
@@ -1164,10 +1167,10 @@ def generate_dataframe(date_time_from_all_media_links, all_media_links_with_date
         A list of datetime strings representing the date and time of each media observation.
     all_media_links_with_date_time : list
         A list of media links corresponding to the date and time provided in `date_time_from_all_media_links`.
-    INSTRUMENT_KEYWORDS : dict, optional
+    instrument_keywords : dict, optional
         A dictionary where the keys represent instrument names
         and the values are lists of keywords associated with each instrument.
-    POLARIMETRY_KEYWORDS : dict, optional
+    polarimetry_keywords : dict, optional
         A dictionary containing keywords that identify if polarimetry was performed.
 
     Returns
@@ -1199,45 +1202,40 @@ def generate_dataframe(date_time_from_all_media_links, all_media_links_with_date
     >>> df = generate_dataframe(dt_links, media_links)
     >>> print(df)
            date_time     instruments      targets      comments     video_links    image_links polarimetry
-    0      2022-01-01_12:34:56  [...]     Unspecified  No comments  []            [...]         None
-    1      2022-01-01_12:35:56  [...]     Unspecified  No comments  [...]          []           None
+    0      2022-01-01_12:34:56  [...]     []  ""     []            [...]         None
+    1      2022-01-01_12:35:56  [...]     []  "" comments  [...]          []           None
     """
 
     # Convert date and time to datetime objects
     date_time_objects = convert_to_datetime(date_time_from_all_media_links)
 
-    # Initialize DataFrame
-    df_dict = {
-        'date_time': date_time_objects,
-        'instruments': [[] for _ in range(len(date_time_objects))],
-        'targets': ['Unspecified' for _ in range(len(date_time_objects))],
-        'comments': ['No comments' for _ in range(len(date_time_objects))],
-        'video_links': [[] for _ in range(len(date_time_objects))],
-        'image_links': [[] for _ in range(len(date_time_objects))],
-        'polarimetry': [None for _ in range(len(date_time_objects))]
-    }
-    df = pd.DataFrame(df_dict)
+    # Create DataFrame with datetime index
+    df = pd.DataFrame({'links': all_media_links_with_date_time}, index=date_time_objects)
 
-    # Group links by datetime and extract features
-    for dt, group in zip(date_time_objects, all_media_links_with_date_time):
-        instruments = get_instrument_info(group, INSTRUMENT_KEYWORDS)
-        video_links = get_links_with_string(group, ['mp4', 'mov'])
-        image_links = get_links_with_string(group, ['jpg', 'png'])
+    # Group links by datetime index
+    df = df.groupby(df.index).agg({'links': lambda x: list(x)})
+    df['obs_id'] = range(len(df))
+    df['date_time'] = df.index
+    df = df.set_index('obs_id')
 
-        # Check for polarimetry keywords
-        polarimetry_keywords_found = get_instrument_info(group, POLARIMETRY_KEYWORDS)
-        if polarimetry_keywords_found:
-            polarimetry_status = True
-        else:
-            polarimetry_status = None
+    # Initialize additional columns
+    df['targets'] = None
+    df['comments'] = None
+    df['polarimetry'] = None
 
-        df.loc[df['date_time'] == dt, 'instruments'] = [instruments]
-        df.loc[df['date_time'] == dt, 'video_links'] = [video_links]
-        df.loc[df['date_time'] == dt, 'image_links'] = [image_links]
-        df.loc[df['date_time'] == dt, 'polarimetry'] = [polarimetry_status]
+    # Use apply to update DataFrame
+    df['instruments'] = df['links'].apply(lambda x: get_instrument_info(x, keywords=instrument_keywords))
+    df['polarimetry'] = df['links'].apply(lambda x: get_instrument_info(x, keywords=polarimetry_keywords))
+    df['video_links'] = df['links'].apply(lambda x: get_links_with_string(x, ['mp4', 'mov']))
+    df['image_links'] = df['links'].apply(lambda x: get_links_with_string(x, ['jpg', 'png']))
+    # Drop links column
+    df.drop('links', axis=1, inplace=True)
+
+    # Reorder columns
+    column_order = ['date_time', 'instruments', 'targets', 'polarimetry', 'comments', 'video_links', 'image_links']
+    df = df[column_order]
 
     return df
-
 
 def fix_duplicate_times(df: DataFrame, TIME_DIFF_THRESHOLD_SECONDS: int = 60) -> DataFrame:
     """
@@ -1273,12 +1271,12 @@ def fix_duplicate_times(df: DataFrame, TIME_DIFF_THRESHOLD_SECONDS: int = 60) ->
     # Group rows based on time proximity
     grouped_df = sorted_df.groupby((sorted_df['date_time'].diff() > threshold).cumsum()).agg({
         'date_time': 'first',
-        'instruments': lambda x: list(set(item for sublist in x for item in sublist)),
+        'instruments': lambda x: list(set(item for sublist in x if sublist is not None for item in sublist)),
         'targets': 'first',
         'comments': 'first',
-        'video_links': lambda x: list(set(item for sublist in x for item in sublist)),
-        'image_links': lambda x: list(set(item for sublist in x for item in sublist)),
-        'polarimetry': lambda x: any(item for item in x)
+        'video_links': lambda x: list(set(item for sublist in x if sublist is not None for item in sublist)),
+        'image_links': lambda x: list(set(item for sublist in x if sublist is not None for item in sublist)),
+        'polarimetry': lambda x: any(item for item in x if item is not None)
     })
 
     # Convert 'date_time' column back to native Python datetime
